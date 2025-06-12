@@ -1,11 +1,14 @@
+# Generated Python Test Code - check_the_router_mode_of_the_device.py
+# Generated on: 2025-06-12 10:18:58
+
 import subprocess
 
 def get_router_mode():
     try:
-        output = subprocess.run(
-            ["dmcli", "eRT", "getv", "Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode"],
-            capture_output=True, text=True
-        )
+        #output = subprocess.run(
+        #    ["dmcli", "eRT", "getv", #"Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode"],
+ #           capture_output=True, text=True
+  #      )
         return output.stdout.strip()
     except Exception as e:
         print(f"Error running dmcli: {e}")
@@ -43,4 +46,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

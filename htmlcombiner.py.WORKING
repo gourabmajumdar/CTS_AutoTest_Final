@@ -1,0 +1,178 @@
+import os
+import textile
+from datetime import datetime
+
+
+def delete_combined_report():
+    combined_report_path = "reports/combinedreport.html"
+    if os.path.exists(combined_report_path):
+        try:
+            os.remove(combined_report_path)
+            print(f"Removed file: {combined_report_path}")
+        except FileNotFoundError:
+            pass
+    else:
+        print(f"File '{combined_report_path}' does not exist.")
+
+
+def txt_html_converter(input_file, output_file):
+    """Convert text file to HTML using textile markup"""
+    if not os.path.exists(input_file):
+        print(f"Warning: {input_file} not found - skipping conversion")
+        return False
+
+    try:
+        with open(input_file, 'r', encoding='utf-8') as file:
+            content = file.read()
+
+        # Add some basic formatting if content is plain text
+        if content.strip():
+            html_content = textile.textile(content)
+        else:
+            html_content = "<p><em>No issues found or no output generated.</em></p>"
+
+        with open(output_file, 'w', encoding='utf-8') as file:
+            file.write(html_content)
+
+        print(f"Converted: {input_file} -> {output_file}")
+        return True
+    except Exception as e:
+        print(f"Error converting {input_file}: {e}")
+        return False
+
+
+def combine_html_files(input_folder, output_file):
+    combine_html = ""
+    delete_combined_report()
+
+    # Add header with timestamp and file count info
+    combine_html += f"""<!DOCTYPE html>
+<html>
+<head>
+    <title>Code Quality Report</title>
+    <style>
+        body {{ font-family: Arial, sans-serif; margin: 20px; }}
+        h1 {{ color: #333; border-bottom: 2px solid #007acc; }}
+        h2 {{ color: #007acc; margin-top: 30px; }}
+        .timestamp {{ color: #666; font-style: italic; }}
+        .summary {{ background-color: #f5f5f5; padding: 10px; border-radius: 5px; margin: 20px 0; }}
+    </style>
+</head>
+<body>
+    <h1>Multi-Test Code Quality Analysis Report</h1>
+    <p class="timestamp">Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+"""
+
+    # Add summary section if summary.txt exists
+    summary_path = os.path.join(input_folder, "summary.txt")
+    if os.path.exists(summary_path):
+        try:
+            with open(summary_path, 'r', encoding='utf-8') as file:
+                summary_content = file.read()
+            combine_html += f"""
+    <div class="summary">
+        <h2>Executive Summary</h2>
+        <pre>{summary_content}</pre>
+    </div>
+"""
+        except Exception as e:
+            print(f"Error reading summary: {e}")
+
+    # Define the explicit processing order
+    processing_order = [
+        ("bandit_output.html", "Bandit - Security Analysis", "Security scanner results for all test scripts"),
+        ("black_output.html", "Black - Code Formatting", "Code formatting analysis"),
+        ("flake8_output.html", "Flake8 - Style & Lint Checks", "PEP 8 style and linting results"),
+        ("pylint_output.html", "Pylint - Static Code Analysis", "Comprehensive static analysis")
+    ]
+
+    try:
+        # Process files in predefined order
+        for filename, title, description in processing_order:
+            file_path = os.path.join(input_folder, filename)
+            if os.path.exists(file_path):
+                combine_html += f"<h2>{title}</h2>\n"
+                combine_html += f"<p><em>{description}</em></p>\n"
+
+                if filename == "pylint_output.html":
+                    combine_html += "<p><em>Pylint Scoring Info:</em> A minimum score threshold of <strong>8.0</strong> has been set using <code>--fail-under=8.0</code>. This ensures basic code quality without enforcing strict compliance.</p>\n"
+
+                with open(file_path, 'r', encoding='utf-8') as file:
+                    file_content = file.read()
+                    # Wrap content in a div for better styling
+                    combine_html += f'<div class="tool-output">\n{file_content}\n</div>\n'
+
+                print(f"Processed: {filename}")
+            else:
+                combine_html += f"<h2>{title}</h2>\n"
+                combine_html += f"<p><em>Warning: {filename} not found - analysis may have failed or no issues detected.</em></p>\n"
+                print(f"Warning: {filename} not found - skipped")
+
+        # Close HTML
+        combine_html += """
+</body>
+</html>
+"""
+
+        with open(output_file, 'w', encoding='utf-8') as outfile:
+            outfile.write(combine_html)
+
+        print(f"Combined report created: {output_file}")
+
+    except FileNotFoundError:
+        print(f"Error: The folder '{input_folder}' does not exist.")
+        return
+    except Exception as e:
+        print(f"Error creating combined report: {e}")
+        return
+
+
+def clean_reports_folder():
+    reports_folder = "reports/"
+    ignored_files = ["combinedreport.html", "summary.txt"]
+    if os.path.exists(reports_folder):
+        files_removed = 0
+        for filename in os.listdir(reports_folder):
+            file_path = os.path.join(reports_folder, filename)
+            try:
+                if filename in ignored_files:
+                    continue
+                if os.path.isfile(file_path):
+                    os.remove(file_path)
+                    files_removed += 1
+                    print(f"Removed file: {file_path}")
+            except Exception as e:
+                print(f"Error removing file {file_path}: {e}")
+        print(f"Cleanup completed: {files_removed} temporary files removed")
+    else:
+        print(f"Reports folder '{reports_folder}' does not exist.")
+
+
+# Main execution
+if __name__ == "__main__":
+    input_folder = "reports/"
+    output_file = "reports/combinedreport.html"
+
+    print("Starting HTML report generation...")
+
+    # Convert text reports to HTML (order doesn't matter here)
+    conversions = [
+        ("reports/black_output.txt", "reports/black_output.html"),
+        ("reports/pylint_output.txt", "reports/pylint_output.html"),
+        ("reports/flake8_output.txt", "reports/flake8_output.html")
+    ]
+
+    for txt_file, html_file in conversions:
+        txt_html_converter(txt_file, html_file)
+
+    # Note: bandit already outputs HTML directly from your config
+    if not os.path.exists("reports/bandit_output.html"):
+        print("Warning: bandit_output.html not found - bandit may have failed")
+
+    # Combine in explicit order
+    combine_html_files(input_folder, output_file)
+
+    # Clean up temporary files
+    clean_reports_folder()
+
+    print("HTML report generation completed!")

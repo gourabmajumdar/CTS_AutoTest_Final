@@ -1349,7 +1349,7 @@ async function ingestTest() {
 }
 
 // ================================================================================================
-// FIXED MAIN FUNCTIONALITY - GENERATE CODE
+// MAIN FUNCTIONALITY - GENERATE CODE
 // ================================================================================================
 
 async function generateCode() {
@@ -1393,39 +1393,27 @@ async function generateCode() {
             // Store generated scripts
             generatedScripts = result.generated_scripts;
 
-            // Handle display based on number of scripts
+            // Create multi test areas
+            //createMultiTestAreas();
             if (generatedScripts.length > 1) {
-                // Multiple test cases - create multi test areas
                 createMultiTestAreas();
-
-                // Populate each multi-test text area
-                generatedScripts.forEach((script, index) => {
-                    const textarea = document.getElementById(`testArea${index}`);
-                    if (textarea) {
-                        textarea.value = script.code;
-                        updateTestAreaCharCount(index);
-                        autoResizeTestTextarea(index);
-                    }
-                });
             } else {
-                // Single test case - use main text area
+                // Show single text area for single test case
                 const singleTextAreaContainer = document.querySelector('.text-area-container');
                 if (singleTextAreaContainer) {
                     singleTextAreaContainer.style.display = 'block';
                 }
-
-                // Populate the main text area with the single script
-                if (elements.textArea && generatedScripts.length > 0) {
-                    elements.textArea.value = generatedScripts[0].code;
-                    updateCharCount();
-                    autoResizeTextarea();
-
-                    // Show code actions for single test case
-                    if (elements.codeActions) {
-                        elements.codeActions.classList.add('show');
-                    }
-                }
             }
+
+            // Populate each text area with its corresponding code
+            generatedScripts.forEach((script, index) => {
+                const textarea = document.getElementById(`testArea${index}`);
+                if (textarea) {
+                    textarea.value = script.code;
+                    updateTestAreaCharCount(index);
+                    autoResizeTestTextarea(index);
+                }
+            });
 
             // Update button states
             const executeBtn = document.getElementById('executeBtn');
@@ -1454,7 +1442,7 @@ async function generateCode() {
                 reviewBtn.style.opacity = '0.6';
             }
 
-            showToast(`Generated ${generatedScripts.length} Python test script(s) successfully!`, 'success');
+            showToast(`Generated ${generatedScripts.length} Python test scripts successfully!`, 'success');
         } else {
             // Reset button on failure
             generateBtn.disabled = false;
@@ -1481,7 +1469,7 @@ async function generateCode() {
 }
 
 // ================================================================================================
-// FIXED MAIN FUNCTIONALITY - EXECUTE CODE
+// MAIN FUNCTIONALITY - EXECUTE CODE
 // ================================================================================================
 
 async function executeCode() {
@@ -1530,35 +1518,10 @@ async function executeCode() {
             // Store execution results
             executionResults = result.execution_results;
 
-            // Handle display based on number of scripts
-            if (generatedScripts.length > 1) {
-                // Multiple test cases - update each multi-test area
-                executionResults.forEach((execResult, index) => {
-                    const textarea = document.getElementById(`testArea${index}`);
-                    if (textarea) {
-                        const executionOutput = `=== EXECUTION RESULTS ===
-Test Case: ${execResult.test_case_name}
-Script: ${execResult.script_name}
-Connected Host: ${result.connected_host}
-Execution Status: ${execResult.success ? 'SUCCESS' : 'FAILED'}
-
-=== STDOUT ===
-${execResult.stdout}
-
-=== STDERR ===
-${execResult.stderr}
-
-=== EXECUTION COMPLETED ===`;
-
-                        textarea.value = executionOutput;
-                        updateTestAreaCharCount(index);
-                        autoResizeTestTextarea(index);
-                    }
-                });
-            } else {
-                // Single test case - update main text area
-                if (elements.textArea && executionResults.length > 0) {
-                    const execResult = executionResults[0];
+            // Update each text area with execution results
+            executionResults.forEach((execResult, index) => {
+                const textarea = document.getElementById(`testArea${index}`);
+                if (textarea) {
                     const executionOutput = `=== EXECUTION RESULTS ===
 Test Case: ${execResult.test_case_name}
 Script: ${execResult.script_name}
@@ -1573,11 +1536,11 @@ ${execResult.stderr}
 
 === EXECUTION COMPLETED ===`;
 
-                    elements.textArea.value = executionOutput;
-                    updateCharCount();
-                    autoResizeTextarea();
+                    textarea.value = executionOutput;
+                    updateTestAreaCharCount(index);
+                    autoResizeTestTextarea(index);
                 }
-            }
+            });
 
             // Update button states
             const generateBtn = document.getElementById('generateBtn');
@@ -1600,18 +1563,9 @@ ${execResult.stderr}
                 reviewBtn.style.cursor = 'pointer';
             }
 
-            showToast(`Executed ${executionResults.length} Python test script(s) successfully!`, 'success');
+            showToast(`Executed ${executionResults.length} Python test scripts successfully!`, 'success');
         } else {
             console.error('❌ Execute failed:', result.message);
-
-            // Handle execution_report field for errors (if it exists)
-            if (result.execution_report) {
-                if (generatedScripts.length === 1 && elements.textArea) {
-                    elements.textArea.value = result.execution_report;
-                    updateCharCount();
-                    autoResizeTextarea();
-                }
-            }
 
             // Reset button on failure
             executeBtn.disabled = false;
@@ -1638,7 +1592,7 @@ ${execResult.stderr}
 }
 
 // ================================================================================================
-// FIXED MAIN FUNCTIONALITY - REVIEW CODE
+// MAIN FUNCTIONALITY - REVIEW CODE
 // ================================================================================================
 
 async function reviewCode() {
@@ -1685,32 +1639,10 @@ async function reviewCode() {
         console.log('📋 Review result:', result);
 
         if (result.success) {
-            // Handle display based on number of scripts
-            if (generatedScripts.length > 1) {
-                // Multiple test cases - update each multi-test area
-                generatedScripts.forEach((script, index) => {
-                    const textarea = document.getElementById(`testArea${index}`);
-                    if (textarea) {
-                        const individualReview = `=== CODE REVIEW REPORT ===
-Test Case: ${script.test_case_name}
-Script: ${script.script_name}
-
-${result.review_report}
-
-=== INDIVIDUAL ANALYSIS ===
-This review covers the specific test case: ${script.test_case_name}
-
-Click "Open Report" or "Download Report" for comprehensive analysis results.`;
-
-                        textarea.value = individualReview;
-                        updateTestAreaCharCount(index);
-                        autoResizeTestTextarea(index);
-                    }
-                });
-            } else {
-                // Single test case - update main text area
-                if (elements.textArea && generatedScripts.length > 0) {
-                    const script = generatedScripts[0];
+            // Update all text areas with the review report
+            generatedScripts.forEach((script, index) => {
+                const textarea = document.getElementById(`testArea${index}`);
+                if (textarea) {
                     const individualReview = `=== CODE REVIEW REPORT ===
 Test Case: ${script.test_case_name}
 Script: ${script.script_name}
@@ -1722,11 +1654,11 @@ This review covers the specific test case: ${script.test_case_name}
 
 Click "Open Report" or "Download Report" for comprehensive analysis results.`;
 
-                    elements.textArea.value = individualReview;
-                    updateCharCount();
-                    autoResizeTextarea();
+                    textarea.value = individualReview;
+                    updateTestAreaCharCount(index);
+                    autoResizeTestTextarea(index);
                 }
-            }
+            });
 
             // Final button state management
             const generateBtn = document.getElementById('generateBtn');
@@ -1755,7 +1687,7 @@ Click "Open Report" or "Download Report" for comprehensive analysis results.`;
 
             if (reportButtons) reportButtons.classList.add('show');
 
-            showToast(`Reviewed ${generatedScripts.length} Python test script(s) successfully!`, 'success');
+            showToast(`Reviewed ${generatedScripts.length} Python test scripts successfully!`, 'success');
         } else {
             // Reset button on failure
             reviewBtn.disabled = false;

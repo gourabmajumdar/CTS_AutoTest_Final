@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Multi-Test Code Quality Report</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+        h1 { color: #333; border-bottom: 3px solid #007acc; padding-bottom: 10px; }
+        h2 { color: #007acc; margin-top: 30px; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+        h3 { color: #555; margin-top: 25px; }
+        .timestamp { color: #666; font-style: italic; }
+        .summary { background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #007acc; }
+        .test-case { background-color: #fafafa; margin: 30px 0; padding: 20px; border-radius: 8px; border: 1px solid #ddd; }
+        .test-case-header { background-color: #007acc; color: white; padding: 10px 15px; margin: -20px -20px 20px -20px; border-radius: 8px 8px 0 0; }
+        .tool-section { margin: 20px 0; padding: 15px; background-color: white; border-radius: 5px; border-left: 3px solid #ccc; }
+        .tool-section h4 { color: #333; margin-top: 0; }
+        .flake8 { border-left-color: #ff6b6b; }
+        .pylint { border-left-color: #4ecdc4; }
+        .black { border-left-color: #45b7d1; }
+        .bandit { border-left-color: #f9ca24; }
+        pre { background-color: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; font-size: 12px; }
+        .no-issues { color: #28a745; font-style: italic; }
+        .table-of-contents { background-color: #e9ecef; padding: 15px; border-radius: 5px; margin: 20px 0; }
+        .table-of-contents ul { margin: 0; padding-left: 20px; }
+        .navigation { position: sticky; top: 10px; background-color: #007acc; color: white; padding: 10px; border-radius: 5px; margin-bottom: 20px; }
+        .navigation a { color: white; text-decoration: none; margin-right: 15px; }
+        .navigation a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="navigation">
+        <strong>Quick Navigation:</strong>
+        <a href="#summary">Summary</a>
+        <a href="#test-cases">Test Cases</a>
+        <a href="#collective-analysis">Collective Analysis</a>
+    </div>
+
+    <h1>Multi-Test Code Quality Analysis Report</h1>
+    <p class="timestamp">Generated on: 2025-06-12 10:20:58</p>
+    <p><strong>Total Test Cases Analyzed:</strong> 2</p>
+
+    <div id="summary" class="summary">
+        <h2>Executive Summary</h2>
+        <pre>CODE REVIEW SUMMARY
+====================
+Generated at: 2025-06-12 10:20:58
+Files analyzed: 2
+  - generated-scripts/check_the_router_mode_of_the_device.py
+  - generated-scripts/check_the_cable_modem_ip_address_of_the_device.py
+
+BLACK:
+  Return Code: 0
+  Status: Success
+
+FLAKE8:
+  Return Code: 1
+  Status: Issues Found
+
+BANDIT:
+  Return Code: 1
+  Status: Issues Found
+
+PYLINT:
+  Return Code: 30
+  Status: Issues Found
+
+</pre>
+    </div>
+
+    <div class="table-of-contents">
+        <h2>Table of Contents</h2>
+        <ul>
+            <li><a href="#test-case-1">Check The Router Mode Of The Device (check_the_router_mode_of_the_device.py)</a></li>
+            <li><a href="#test-case-2">Check The Cable Modem Ip Address Of The Device (check_the_cable_modem_ip_address_of_the_device.py)</a></li>
+        </ul>
+    </div>
+<div id="test-cases">
+    <h2>Individual Test Case Analysis</h2>
+
+    <div id="test-case-1" class="test-case">
+        <div class="test-case-header">
+            <h3>Test Case 1: Check The Router Mode Of The Device</h3>
+            <p><strong>Script File:</strong> check_the_router_mode_of_the_device.py</p>
+        </div>
+
+        <div class="tool-section flake8">
+            <h4>Flake8 - Style & Lint Checks</h4>
+            <p><em>PEP 8 compliance and style issues</em></p>
+            <p class="no-issues">✅ No issues found for this script.</p>
+        </div>
+
+        <div class="tool-section pylint">
+            <h4>Pylint - Static Code Analysis</h4>
+            <p><em>Code quality and potential bugs</em></p>
+            <pre>generated-scripts/check_the_router_mode_of_the_device.py:48: [C0304(missing-final-newline), ] Final newline missing
+generated-scripts/check_the_router_mode_of_the_device.py:13: [W0718(broad-exception-caught), get_router_mode] Catching too general exception Exception
+generated-scripts/check_the_router_mode_of_the_device.py:12: [E0602(undefined-variable), get_router_mode] Undefined variable 'output'
+generated-scripts/check_the_router_mode_of_the_device.py:21: [R1705(no-else-return), extract_mode] Unnecessary "elif" after "return", remove the leading "el" from "elif"
+generated-scripts/check_the_router_mode_of_the_device.py:4: [W0611(unused-import), ] Unused import subprocess
+generated-scripts/check_the_router_mode_of_the_device.py:1: [R0801(duplicate-code), ] Similar lines in 2 files
+generated-scripts/check_the_router_mode_of_the_device.py:1: [R0801(duplicate-code), ] Similar lines in 2 files</pre>
+        </div>
+
+        <div class="tool-section black">
+            <h4>Black - Code Formatting</h4>
+            <p><em>Code formatting analysis</em></p>
+            <pre>--- generated-scripts/check_the_router_mode_of_the_device.py	2025-06-12 14:20:22.961993+00:00
++++ generated-scripts/check_the_router_mode_of_the_device.py	2025-06-12 14:20:57.143880+00:00
+ # Generated Python Test Code - check_the_router_mode_of_the_device.py
+would reformat generated-scripts/check_the_router_mode_of_the_device.py</pre>
+        </div>
+
+        <div class="tool-section bandit">
+            <h4>Bandit - Security Analysis</h4>
+            <p><em>Security vulnerability scanning</em></p>
+            <div>
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta charset="UTF-8">
+
+<title>
+    Bandit Report
+</title>
+
+<style>
+
+html * {
+    font-family: "Arial", sans-serif;
+}
+
+pre {
+    font-family: "Monaco", monospace;
+}
+
+.bordered-box {
+    border: 1px solid black;
+    padding-top:.5em;
+    padding-bottom:.5em;
+    padding-left:1em;
+}
+
+.metrics-box {
+    font-size: 1.1em;
+    line-height: 130%;
+}
+
+.metrics-title {
+    font-size: 1.5em;
+    font-weight: 500;
+    margin-bottom: .25em;
+}
+
+.issue-description {
+    font-size: 1.3em;
+    font-weight: 500;
+}
+
+.candidate-issues {
+    margin-left: 2em;
+    border-left: solid 1px; LightGray;
+    padding-left: 5%;
+    margin-top: .2em;
+    margin-bottom: .2em;
+}
+
+.issue-block {
+    border: 1px solid LightGray;
+    padding-left: .5em;
+    padding-top: .5em;
+    padding-bottom: .5em;
+    margin-bottom: .5em;
+}
+
+.issue-sev-high {
+    background-color: Pink;
+}
+
+.issue-sev-medium {
+    background-color: NavajoWhite;
+}
+
+.issue-sev-low {
+    background-color: LightCyan;
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="metrics">
+    <div class="metrics-box bordered-box">
+        <div class="metrics-title">
+            Metrics:<br>
+        </div>
+        Total lines of code: <span id="loc">72</span><br>
+        Total lines skipped (#nosec): <span id="nosec">0</span>
+    </div>
+</div>
+
+
+
+
+<br>
+<div id="results">
+    
+<div id="issue-0">
+<div class="issue-block issue-sev-low">
+    <b>blacklist: </b> Consider possible security implications associated with the subprocess module.<br>
+    <b>Test ID:</b> B404<br>
+    <b>Severity: </b>LOW<br>
+    <b>Confidence: </b>HIGH<br>
+    <b>CWE: </b><a href="https://cwe.mitre.org/data/definitions/78.html" target="_blank">CWE-78</a><br>
+    <b>File: </b><a href="./generated-scripts/check_the_cable_modem_ip_address_of_the_device.py" target="_blank">./generated-scripts/check_the_cable_modem_ip_address_of_the_device.py</a><br>
+    <b>Line number: </b>4<br>
+    <b>More info: </b><a href="https://bandit.readthedocs.io/en/1.8.3/blacklists/blacklist_imports.html#b404-import-subprocess" target="_blank">https://bandit.readthedocs.io/en/1.8.3/blacklists/blacklist_imports.html#b404-import-subprocess</a><br>
+
+<div class="code">
+<pre>
+3	
+4	import subprocess
+5	import re
+</pre>
+</div>
+
+
+</div>
+</div>
+
+<div id="issue-1">
+<div class="issue-block issue-sev-low">
+    <b>blacklist: </b> Consider possible security implications associated with the subprocess module.<br>
+    <b>Test ID:</b> B404<br>
+    <b>Severity: </b>LOW<br>
+    <b>Confidence: </b>HIGH<br>
+    <b>CWE: </b><a href="https://cwe.mitre.org/data/definitions/78.html" target="_blank">CWE-78</a><br>
+    <b>File: </b><a href="./generated-scripts/check_the_router_mode_of_the_device.py" target="_blank">./generated-scripts/check_the_router_mode_of_the_device.py</a><br>
+    <b>Line number: </b>4<br>
+    <b>More info: </b><a href="https://bandit.readthedocs.io/en/1.8.3/blacklists/blacklist_imports.html#b404-import-subprocess" target="_blank">https://bandit.readthedocs.io/en/1.8.3/blacklists/blacklist_imports.html#b404-import-subprocess</a><br>
+
+<div class="code">
+<pre>
+3	
+4	import subprocess
+5	
+</pre>
+</div>
+
+
+</div>
+</div>
+
+</div>
+
+</body>
+</html>
+</div>
+        </div>
+    </div>
+
+    <div id="test-case-2" class="test-case">
+        <div class="test-case-header">
+            <h3>Test Case 2: Check The Cable Modem Ip Address Of The Device</h3>
+            <p><strong>Script File:</strong> check_the_cable_modem_ip_address_of_the_device.py</p>
+        </div>
+
+        <div class="tool-section flake8">
+            <h4>Flake8 - Style & Lint Checks</h4>
+            <p><em>PEP 8 compliance and style issues</em></p>
+            <p class="no-issues">✅ No issues found for this script.</p>
+        </div>
+
+        <div class="tool-section pylint">
+            <h4>Pylint - Static Code Analysis</h4>
+            <p><em>Code quality and potential bugs</em></p>
+            <pre>generated-scripts/check_the_cable_modem_ip_address_of_the_device.py:51: [C0304(missing-final-newline), ] Final newline missing
+generated-scripts/check_the_cable_modem_ip_address_of_the_device.py:14: [W0718(broad-exception-caught), get_cm_ip] Catching too general exception Exception
+generated-scripts/check_the_cable_modem_ip_address_of_the_device.py:13: [E0602(undefined-variable), get_cm_ip] Undefined variable 'output'
+generated-scripts/check_the_cable_modem_ip_address_of_the_device.py:4: [W0611(unused-import), ] Unused import subprocess</pre>
+        </div>
+
+        <div class="tool-section black">
+            <h4>Black - Code Formatting</h4>
+            <p><em>Code formatting analysis</em></p>
+            <pre>--- generated-scripts/check_the_cable_modem_ip_address_of_the_device.py	2025-06-12 14:19:44.915365+00:00
++++ generated-scripts/check_the_cable_modem_ip_address_of_the_device.py	2025-06-12 14:20:57.143737+00:00
+would reformat generated-scripts/check_the_cable_modem_ip_address_of_the_device.py</pre>
+        </div>
+
+        <div class="tool-section bandit">
+            <h4>Bandit - Security Analysis</h4>
+            <p><em>Security vulnerability scanning</em></p>
+            <div>
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta charset="UTF-8">
+
+<title>
+    Bandit Report
+</title>
+
+<style>
+
+html * {
+    font-family: "Arial", sans-serif;
+}
+
+pre {
+    font-family: "Monaco", monospace;
+}
+
+.bordered-box {
+    border: 1px solid black;
+    padding-top:.5em;
+    padding-bottom:.5em;
+    padding-left:1em;
+}
+
+.metrics-box {
+    font-size: 1.1em;
+    line-height: 130%;
+}
+
+.metrics-title {
+    font-size: 1.5em;
+    font-weight: 500;
+    margin-bottom: .25em;
+}
+
+.issue-description {
+    font-size: 1.3em;
+    font-weight: 500;
+}
+
+.candidate-issues {
+    margin-left: 2em;
+    border-left: solid 1px; LightGray;
+    padding-left: 5%;
+    margin-top: .2em;
+    margin-bottom: .2em;
+}
+
+.issue-block {
+    border: 1px solid LightGray;
+    padding-left: .5em;
+    padding-top: .5em;
+    padding-bottom: .5em;
+    margin-bottom: .5em;
+}
+
+.issue-sev-high {
+    background-color: Pink;
+}
+
+.issue-sev-medium {
+    background-color: NavajoWhite;
+}
+
+.issue-sev-low {
+    background-color: LightCyan;
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="metrics">
+    <div class="metrics-box bordered-box">
+        <div class="metrics-title">
+            Metrics:<br>
+        </div>
+        Total lines of code: <span id="loc">72</span><br>
+        Total lines skipped (#nosec): <span id="nosec">0</span>
+    </div>
+</div>
+
+
+
+
+<br>
+<div id="results">
+    
+<div id="issue-0">
+<div class="issue-block issue-sev-low">
+    <b>blacklist: </b> Consider possible security implications associated with the subprocess module.<br>
+    <b>Test ID:</b> B404<br>
+    <b>Severity: </b>LOW<br>
+    <b>Confidence: </b>HIGH<br>
+    <b>CWE: </b><a href="https://cwe.mitre.org/data/definitions/78.html" target="_blank">CWE-78</a><br>
+    <b>File: </b><a href="./generated-scripts/check_the_cable_modem_ip_address_of_the_device.py" target="_blank">./generated-scripts/check_the_cable_modem_ip_address_of_the_device.py</a><br>
+    <b>Line number: </b>4<br>
+    <b>More info: </b><a href="https://bandit.readthedocs.io/en/1.8.3/blacklists/blacklist_imports.html#b404-import-subprocess" target="_blank">https://bandit.readthedocs.io/en/1.8.3/blacklists/blacklist_imports.html#b404-import-subprocess</a><br>
+
+<div class="code">
+<pre>
+3	
+4	import subprocess
+5	import re
+</pre>
+</div>
+
+
+</div>
+</div>
+
+<div id="issue-1">
+<div class="issue-block issue-sev-low">
+    <b>blacklist: </b> Consider possible security implications associated with the subprocess module.<br>
+    <b>Test ID:</b> B404<br>
+    <b>Severity: </b>LOW<br>
+    <b>Confidence: </b>HIGH<br>
+    <b>CWE: </b><a href="https://cwe.mitre.org/data/definitions/78.html" target="_blank">CWE-78</a><br>
+    <b>File: </b><a href="./generated-scripts/check_the_router_mode_of_the_device.py" target="_blank">./generated-scripts/check_the_router_mode_of_the_device.py</a><br>
+    <b>Line number: </b>4<br>
+    <b>More info: </b><a href="https://bandit.readthedocs.io/en/1.8.3/blacklists/blacklist_imports.html#b404-import-subprocess" target="_blank">https://bandit.readthedocs.io/en/1.8.3/blacklists/blacklist_imports.html#b404-import-subprocess</a><br>
+
+<div class="code">
+<pre>
+3	
+4	import subprocess
+5	
+</pre>
+</div>
+
+
+</div>
+</div>
+
+</div>
+
+</body>
+</html>
+</div>
+        </div>
+    </div>
+</div>
+
+<div id="collective-analysis">
+    <h2>Collective Analysis - All Test Cases</h2>
+    <p><em>This section shows the complete output from all analysis tools across all test cases.</em></p>
+
+    <div class="tool-section flake8">
+        <h3>Flake8 - Complete Output</h3>
+        <p class="no-issues">No output generated.</p>
+    </div>
+
+    <div class="tool-section pylint">
+        <h3>Pylint - Complete Output</h3>
+        <pre>************* Module check_the_cable_modem_ip_address_of_the_device
+generated-scripts/check_the_cable_modem_ip_address_of_the_device.py:51: [C0304(missing-final-newline), ] Final newline missing
+generated-scripts/check_the_cable_modem_ip_address_of_the_device.py:14: [W0718(broad-exception-caught), get_cm_ip] Catching too general exception Exception
+generated-scripts/check_the_cable_modem_ip_address_of_the_device.py:13: [E0602(undefined-variable), get_cm_ip] Undefined variable 'output'
+generated-scripts/check_the_cable_modem_ip_address_of_the_device.py:4: [W0611(unused-import), ] Unused import subprocess
+************* Module check_the_router_mode_of_the_device
+generated-scripts/check_the_router_mode_of_the_device.py:48: [C0304(missing-final-newline), ] Final newline missing
+generated-scripts/check_the_router_mode_of_the_device.py:13: [W0718(broad-exception-caught), get_router_mode] Catching too general exception Exception
+generated-scripts/check_the_router_mode_of_the_device.py:12: [E0602(undefined-variable), get_router_mode] Undefined variable 'output'
+generated-scripts/check_the_router_mode_of_the_device.py:21: [R1705(no-else-return), extract_mode] Unnecessary "elif" after "return", remove the leading "el" from "elif"
+generated-scripts/check_the_router_mode_of_the_device.py:4: [W0611(unused-import), ] Unused import subprocess
+generated-scripts/check_the_router_mode_of_the_device.py:1: [R0801(duplicate-code), ] Similar lines in 2 files
+==check_the_cable_modem_ip_address_of_the_device:[43:51]
+==check_the_router_mode_of_the_device:[40:48]
+            print("Raw Output:")
+            print(raw_output)
+            print("Test Result: FAILED")
+    else:
+        print("Test Result: FAILED")
+
+if __name__ == '__main__':
+    main()
+generated-scripts/check_the_router_mode_of_the_device.py:1: [R0801(duplicate-code), ] Similar lines in 2 files
+==check_the_cable_modem_ip_address_of_the_device:[7:20]
+==check_the_router_mode_of_the_device:[6:19]
+    try:
+        #output = subprocess.run(
+        #    ["dmcli", "eRT", "getv", #"Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode"],
+ #           capture_output=True, text=True
+  #      )
+        return output.stdout.strip()
+    except Exception as e:
+        print(f"Error running dmcli: {e}")
+        return None
+
+def extract_mode(dmcli_output):
+    for line in dmcli_output.splitlines():
+        if 'value:' in line:
+
+------------------------------------------------------------------
+Your code has been rated at 7.21/10 (previous run: 8.71/10, -1.51)
+
+</pre>
+    </div>
+
+    <div class="tool-section black">
+        <h3>Black - Complete Output</h3>
+        <pre>--- generated-scripts/check_the_cable_modem_ip_address_of_the_device.py	2025-06-12 14:19:44.915365+00:00
++++ generated-scripts/check_the_cable_modem_ip_address_of_the_device.py	2025-06-12 14:20:57.143737+00:00
+@@ -2,35 +2,39 @@
+ # Generated on: 2025-06-12 10:18:58
+ 
+ import subprocess
+ import re
+ 
++
+ def get_cm_ip():
+     try:
+-        #output = subprocess.run(
++        # output = subprocess.run(
+         #    ["dmcli", "eRT", "getv", "Device.DeviceInfo.X_COMCAST-COM_CM_IP"],
+         #    capture_output=True, text=True
+-        #)
++        # )
+         return output.stdout.strip()
+     except Exception as e:
+         print(f"Error running dmcli: {e}")
+         return None
+ 
++
+ def extract_ip(dmcli_output):
+     for line in dmcli_output.splitlines():
+-        if 'value:' in line:
+-            ip = line.split('value:')[-1].strip()
++        if "value:" in line:
++            ip = line.split("value:")[-1].strip()
+             if is_valid_ip(ip):
+                 return ip
+     return None
+ 
++
+ def is_valid_ip(ip):
+     # Simple regex for IPv4
+-    ipv4_pattern = r'^(\d{1,3}\.){3}\d{1,3}$'
++    ipv4_pattern = r"^(\d{1,3}\.){3}\d{1,3}$"
+     # Simple regex for IPv6
+-    ipv6_pattern = r'^([0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}$'
++    ipv6_pattern = r"^([0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}$"
+     return re.match(ipv4_pattern, ip) or re.match(ipv6_pattern, ip)
++
+ 
+ def main():
+     print("Checking the Cable Modem IP Address of the Device...")
+ 
+     raw_output = get_cm_ip()
+@@ -45,7 +49,8 @@
+             print(raw_output)
+             print("Test Result: FAILED")
+     else:
+         print("Test Result: FAILED")
+ 
+-if __name__ == '__main__':
+-    main()
+\ No newline at end of file
++
++if __name__ == "__main__":
++    main()
+--- generated-scripts/check_the_router_mode_of_the_device.py	2025-06-12 14:20:22.961993+00:00
++++ generated-scripts/check_the_router_mode_of_the_device.py	2025-06-12 14:20:57.143880+00:00
+@@ -1,48 +1,52 @@
+ # Generated Python Test Code - check_the_router_mode_of_the_device.py
+ # Generated on: 2025-06-12 10:18:58
+ 
+ import subprocess
+ 
++
+ def get_router_mode():
+     try:
+-        #output = subprocess.run(
++        # output = subprocess.run(
+         #    ["dmcli", "eRT", "getv", #"Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode"],
+- #           capture_output=True, text=True
+-  #      )
++        #           capture_output=True, text=True
++        #      )
+         return output.stdout.strip()
+     except Exception as e:
+         print(f"Error running dmcli: {e}")
+         return None
+ 
++
+ def extract_mode(dmcli_output):
+     for line in dmcli_output.splitlines():
+-        if 'value:' in line:
+-            mode = line.split('value:')[-1].strip()
+-            if mode.lower() in ['router', 'bridge']:
++        if "value:" in line:
++            mode = line.split("value:")[-1].strip()
++            if mode.lower() in ["router", "bridge"]:
+                 return mode
+-            elif mode == '':
+-                return 'null'
++            elif mode == "":
++                return "null"
+     return None
++
+ 
+ def main():
+     print("Checking the Router Mode of the Device...")
+ 
+     raw_output = get_router_mode()
+     if raw_output:
+         mode = extract_mode(raw_output)
+-        if mode in ['router', 'bridge']:
++        if mode in ["router", "bridge"]:
+             print(f"Router Mode: {mode}")
+             print("Test Result: COMPLETED")
+-        elif mode == 'null':
++        elif mode == "null":
+             print("Router Mode value is null or empty.")
+             print("Test Result: FAILED")
+         else:
+             print("Output received, but router mode is unknown.")
+             print("Raw Output:")
+             print(raw_output)
+             print("Test Result: FAILED")
+     else:
+         print("Test Result: FAILED")
+ 
+-if __name__ == '__main__':
+-    main()
+\ No newline at end of file
++
++if __name__ == "__main__":
++    main()
+would reformat generated-scripts/check_the_cable_modem_ip_address_of_the_device.py
+would reformat generated-scripts/check_the_router_mode_of_the_device.py
+
+All done! ✨ 🍰 ✨
+2 files would be reformatted.
+
+</pre>
+    </div>
+
+    <div class="tool-section bandit">
+        <h3>Bandit - Complete Output</h3>
+        <div>
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta charset="UTF-8">
+
+<title>
+    Bandit Report
+</title>
+
+<style>
+
+html * {
+    font-family: "Arial", sans-serif;
+}
+
+pre {
+    font-family: "Monaco", monospace;
+}
+
+.bordered-box {
+    border: 1px solid black;
+    padding-top:.5em;
+    padding-bottom:.5em;
+    padding-left:1em;
+}
+
+.metrics-box {
+    font-size: 1.1em;
+    line-height: 130%;
+}
+
+.metrics-title {
+    font-size: 1.5em;
+    font-weight: 500;
+    margin-bottom: .25em;
+}
+
+.issue-description {
+    font-size: 1.3em;
+    font-weight: 500;
+}
+
+.candidate-issues {
+    margin-left: 2em;
+    border-left: solid 1px; LightGray;
+    padding-left: 5%;
+    margin-top: .2em;
+    margin-bottom: .2em;
+}
+
+.issue-block {
+    border: 1px solid LightGray;
+    padding-left: .5em;
+    padding-top: .5em;
+    padding-bottom: .5em;
+    margin-bottom: .5em;
+}
+
+.issue-sev-high {
+    background-color: Pink;
+}
+
+.issue-sev-medium {
+    background-color: NavajoWhite;
+}
+
+.issue-sev-low {
+    background-color: LightCyan;
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="metrics">
+    <div class="metrics-box bordered-box">
+        <div class="metrics-title">
+            Metrics:<br>
+        </div>
+        Total lines of code: <span id="loc">72</span><br>
+        Total lines skipped (#nosec): <span id="nosec">0</span>
+    </div>
+</div>
+
+
+
+
+<br>
+<div id="results">
+    
+<div id="issue-0">
+<div class="issue-block issue-sev-low">
+    <b>blacklist: </b> Consider possible security implications associated with the subprocess module.<br>
+    <b>Test ID:</b> B404<br>
+    <b>Severity: </b>LOW<br>
+    <b>Confidence: </b>HIGH<br>
+    <b>CWE: </b><a href="https://cwe.mitre.org/data/definitions/78.html" target="_blank">CWE-78</a><br>
+    <b>File: </b><a href="./generated-scripts/check_the_cable_modem_ip_address_of_the_device.py" target="_blank">./generated-scripts/check_the_cable_modem_ip_address_of_the_device.py</a><br>
+    <b>Line number: </b>4<br>
+    <b>More info: </b><a href="https://bandit.readthedocs.io/en/1.8.3/blacklists/blacklist_imports.html#b404-import-subprocess" target="_blank">https://bandit.readthedocs.io/en/1.8.3/blacklists/blacklist_imports.html#b404-import-subprocess</a><br>
+
+<div class="code">
+<pre>
+3	
+4	import subprocess
+5	import re
+</pre>
+</div>
+
+
+</div>
+</div>
+
+<div id="issue-1">
+<div class="issue-block issue-sev-low">
+    <b>blacklist: </b> Consider possible security implications associated with the subprocess module.<br>
+    <b>Test ID:</b> B404<br>
+    <b>Severity: </b>LOW<br>
+    <b>Confidence: </b>HIGH<br>
+    <b>CWE: </b><a href="https://cwe.mitre.org/data/definitions/78.html" target="_blank">CWE-78</a><br>
+    <b>File: </b><a href="./generated-scripts/check_the_router_mode_of_the_device.py" target="_blank">./generated-scripts/check_the_router_mode_of_the_device.py</a><br>
+    <b>Line number: </b>4<br>
+    <b>More info: </b><a href="https://bandit.readthedocs.io/en/1.8.3/blacklists/blacklist_imports.html#b404-import-subprocess" target="_blank">https://bandit.readthedocs.io/en/1.8.3/blacklists/blacklist_imports.html#b404-import-subprocess</a><br>
+
+<div class="code">
+<pre>
+3	
+4	import subprocess
+5	
+</pre>
+</div>
+
+
+</div>
+</div>
+
+</div>
+
+</body>
+</html>
+</div>
+    </div>
+
+</div>
+
+<footer style="margin-top: 50px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; text-align: center;">
+    <p>Report generated by CTS AutoTest Multi-Test Code Review System</p>
+</footer>
+
+</body>
+</html>

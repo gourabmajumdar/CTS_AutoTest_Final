@@ -442,77 +442,19 @@ def review_code():
         data = request.get_json()
         test_case_id = data.get('test_case_id', None)
 
-        # Ensure reports directory exists
-        reports_dir = os.path.join(os.getcwd(), '..', 'reports')
-        os.makedirs(reports_dir, exist_ok=True)
-
-        # Get the full path to tox
-        import shutil
-        tox_path = shutil.which('tox')
-
-        if not tox_path:
-            tox_path = '/Users/gmajum163@cable.comcast.com/Library/Python/3.9/bin/tox'
-
         # Run tox for code quality analysis
-        print(f"[INFO] Running tox from: {tox_path}")
-        print(f"[INFO] Current working directory: {os.getcwd()}")
-
-        # Set environment variables that might be needed
-        env = os.environ.copy()
-        env['PATH'] = f"/Users/gmajum163@cable.comcast.com/Library/Python/3.9/bin:{env.get('PATH', '')}"
-
-        run_tox = subprocess.run([tox_path], capture_output=True, text=True,
-                                 cwd=os.getcwd(), env=env, timeout=300)
-
-        print(f"[DEBUG] Tox return code: {run_tox.returncode}")
-        print(f"[DEBUG] Tox stdout: {run_tox.stdout}")
-        print(f"[DEBUG] Tox stderr: {run_tox.stderr}")
+        print("[INFO] Running tox for code quality analysis...")
+        run_tox = subprocess.run(["tox"], capture_output=True, text=True)
 
         # Read the summary file
-        summary_path = os.path.join(reports_dir, 'summary.txt')
+        summary_path = os.path.join(os.getcwd(), 'reports', 'summary.txt')
         summary_content = ""
 
         try:
             with open(summary_path, 'r') as f:
                 summary_content = f.read()
-            print(f"[INFO] Found summary at: {summary_path}")
         except FileNotFoundError:
-            summary_content = f"""CODE REVIEW SUMMARY
-====================
-Generated at: {datetime.now().strftime('%Y- %m-%d %H:%M:%S')}
-
-ANALYSIS STATUS:
-- Tox return code: {run_tox.returncode}
-- Summary file not found at: {summary_path}
-
-TOX OUTPUT:
-{run_tox.stdout}
-
-TOX ERRORS:
-{run_tox.stderr}
-
-FILES IN REPORTS DIRECTORY:
-{os.listdir(reports_dir) if os.path.exists(reports_dir) else 'Reports directory not found'}
-"""
-
-        # Read individual tool reports for more detailed analysis
-        detailed_reports = {}
-        tool_files = ['flake8_output.txt', 'pylint_output.txt', 'bandit_output.txt', 'black_output.txt']
-
-        for tool_file in tool_files:
-            tool_path = os.path.join(reports_dir, tool_file)
-            if os.path.exists(tool_path):
-                try:
-                    with open(tool_path, 'r') as f:
-                        content = f.read()
-                        if content.strip():
-                            detailed_reports[tool_file.replace('_output.txt', '').upper()] = content
-                        else:
-                            detailed_reports[tool_file.replace('_output.txt',
-                                                               '').upper()] = "No issues found or no output generated."
-                except Exception as e:
-                    detailed_reports[
-                        tool_file.replace('_output.txt', '').upper()] = f"Error reading {tool_file}: {str(e)}"
+            summary_content = "Summary file not found. Code analysis may have failed."
 
         if test_case_id is not None:
             # Generate review for specific test case
@@ -521,63 +463,30 @@ Test Case ID: {test_case_id}
 Review Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 Language: Python
 
-=== EXECUTIVE SUMMARY ===
 {summary_content}
 
 === INDIVIDUAL TEST CASE ANALYSIS ===
 This analysis covers Test Case {test_case_id} specifically.
-"""
 
-            # Add detailed tool reports
-            for tool, content in detailed_reports.items():
-                review_report += f"""
-=== {tool} ANALYSIS ===
-{content}
-"""
+Status: Click on "Open Report" or "Download Report" for detailed analysis results.
 
-            review_report += f"""
-=== ACTIONS REQUIRED ===
-• Review the detailed analysis above
-• Click "Open Report" for HTML formatted results
-• Click "Download Report" to save the complete analysis
-
-Status: Code review completed successfully."""
-
+Note: This review includes syntax validation, PEP 8 compliance, security analysis, and static code analysis."""
         else:
             # Generate review for all test cases
-            script_count = len(generated_scripts_info) if generated_scripts_info else 0
             review_report = f"""=== PYTHON CODE REVIEW REPORT ===
 Review Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 Language: Python
-Total Test Cases Analyzed: {script_count}
+Total Test Cases Analyzed: {len(generated_scripts_info)}
 
-=== EXECUTIVE SUMMARY ===
 {summary_content}
 
 === COMPREHENSIVE ANALYSIS ===
-This analysis covers all generated test scripts:"""
+This analysis covers all generated test scripts:
+{chr(10).join([f"- {script['script_name']}: {script['test_case_name']}" for script in generated_scripts_info])}
 
-            # List all analyzed scripts
-            if generated_scripts_info:
-                for script in generated_scripts_info:
-                    review_report += f"\n• {script['script_name']}: {script['test_case_name']}"
+Status: Click on "Open Report" or "Download Report" for detailed analysis results.
 
-            # Add detailed tool reports
-            for tool, content in detailed_reports.items():
-                review_report += f"""
-
-=== {tool} ANALYSIS ===
-{content}
-"""
-
-            review_report += f"""
-
-=== ACTIONS REQUIRED ===
-• Review the detailed analysis above
-• Click "Open Report" for HTML formatted results with better organization
-• Click "Download Report" to save the complete analysis
-
-Status: Code review completed successfully for all {script_count} test case(s)."""
+Note: This review includes syntax validation, PEP 8 compliance, security analysis, and static code analysis for all test cases."""
 
         return jsonify({
             'success': True,
@@ -585,10 +494,9 @@ Status: Code review completed successfully for all {script_count} test case(s)."
             'message': 'Python code review completed successfully'
         })
 
-    except subprocess.TimeoutExpired:
-        return jsonify({'success': False, 'message': 'Code review timed out after 5 minutes'})
     except Exception as e:
         return jsonify({'success': False, 'message': f'Review error: {str(e)}'})
+
 
 @app.route('/open-report')
 def open_report():
