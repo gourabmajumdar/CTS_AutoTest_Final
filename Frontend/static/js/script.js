@@ -1,80 +1,226 @@
-// Global variables
+// ================================================================================================
+// COGNIZANT AUTO TEST DASHBOARD - COMPLETE JAVASCRIPT
+// Multi-Test Case Support with Dynamic UI Generation
+// ================================================================================================
+
+// Global Variables
 let uploadedFiles = [];
 let currentOperation = null;
+let ingestedTestCases = [];
+let generatedScripts = [];
+let executionResults = [];
 
-// DOM elements
-const uploadArea = document.querySelector('.upload-area');
-const fileInput = document.getElementById('fileInput');
-const fileInfo = document.getElementById('fileInfo');
-const textArea = document.getElementById('textArea');
-const charCount = document.getElementById('charCount');
-const codeActions = document.getElementById('codeActions');
-const progressContainer = document.getElementById('progressContainer');
-const progressTitle = document.getElementById('progressTitle');
-const progressStatus = document.getElementById('progressStatus');
-const progressBar = document.getElementById('progressBar');
-const progressPercentage = document.getElementById('progressPercentage');
-const progressSteps = document.getElementById('progressSteps');
-const toast = document.getElementById('toast');
-const toastMessage = document.getElementById('toastMessage');
+// DOM Elements Cache
+const elements = {
+    uploadArea: null,
+    fileInput: null,
+    fileInfo: null,
+    textArea: null,
+    charCount: null,
+    codeActions: null,
+    progressContainer: null,
+    progressTitle: null,
+    progressStatus: null,
+    progressBar: null,
+    progressPercentage: null,
+    progressSteps: null,
+    toast: null,
+    toastMessage: null
+};
 
-// Initialize when DOM is loaded
+// ================================================================================================
+// INITIALIZATION AND SETUP
+// ================================================================================================
+
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM loaded, initializing...');
+    console.log('🚀 Cognizant AutoTest Dashboard Loading...');
+
+    // Cache DOM elements
+    cacheElements();
+
+    // Setup event listeners
     initializeEventListeners();
+    setupNavigationListeners();
+
+    // Initialize UI state
     updateCharCount();
-    // Initialize to Home page by default
     initializeHomePage();
+
+    console.log('✅ Dashboard initialized successfully');
 });
 
-function initializeHomePage() {
-    // Make sure Home is active and AutoTest content is hidden
-    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-    document.querySelectorAll('.nav-item')[0].classList.add('active'); // First nav item (Home)
+function cacheElements() {
+    elements.uploadArea = document.querySelector('.upload-area');
+    elements.fileInput = document.getElementById('fileInput');
+    elements.fileInfo = document.getElementById('fileInfo');
+    elements.textArea = document.getElementById('textArea');
+    elements.charCount = document.getElementById('charCount');
+    elements.codeActions = document.getElementById('codeActions');
+    elements.progressContainer = document.getElementById('progressContainer');
+    elements.progressTitle = document.getElementById('progressTitle');
+    elements.progressStatus = document.getElementById('progressStatus');
+    elements.progressBar = document.getElementById('progressBar');
+    elements.progressPercentage = document.getElementById('progressPercentage');
+    elements.progressSteps = document.getElementById('progressSteps');
+    elements.toast = document.getElementById('toast');
+    elements.toastMessage = document.getElementById('toastMessage');
+}
 
-    // Set title and content states
+function initializeEventListeners() {
+    console.log('🔧 Setting up event listeners...');
+
+    // File upload events
+    if (elements.uploadArea) {
+        elements.uploadArea.addEventListener('dragover', handleDragOver);
+        elements.uploadArea.addEventListener('dragleave', handleDragLeave);
+        elements.uploadArea.addEventListener('drop', handleDrop);
+        elements.uploadArea.addEventListener('click', () => {
+            if (elements.fileInput) elements.fileInput.click();
+        });
+    }
+
+    if (elements.fileInput) {
+        elements.fileInput.addEventListener('change', handleFileSelect);
+    }
+
+    // Text area events
+    if (elements.textArea) {
+        elements.textArea.addEventListener('input', handleTextAreaInput);
+    }
+
+    // Prevent default drag behaviors
+    document.addEventListener('dragover', preventDefault);
+    document.addEventListener('drop', preventDefault);
+
+    console.log('✅ Event listeners attached');
+}
+
+function setupNavigationListeners() {
+    console.log('🧭 Setting up navigation...');
+
+    const navItems = document.querySelectorAll('.nav-item');
+
+    if (navItems.length >= 2) {
+        // Home navigation
+        navItems[0].addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('🏠 Home navigation clicked');
+            showHome();
+        });
+
+        // AutoTest navigation
+        navItems[1].addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('🧪 AutoTest navigation clicked');
+            showAutoTest();
+        });
+
+        console.log('✅ Navigation listeners attached');
+    } else {
+        console.error('❌ Navigation items not found!');
+    }
+}
+
+function initializeHomePage() {
+    console.log('🏠 Initializing home page...');
+
+    // Reset navigation state
+    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+    const homeNavItem = document.querySelectorAll('.nav-item')[0];
+    if (homeNavItem) {
+        homeNavItem.classList.add('active');
+    }
+
+    // Set initial content state
     const dashboardTitle = document.getElementById('dashboardTitle');
     const welcomeMessage = document.getElementById('welcomeMessage');
     const autoTestContent = document.getElementById('autoTestContent');
 
     if (dashboardTitle) dashboardTitle.textContent = 'Home';
-    if (welcomeMessage) welcomeMessage.classList.add('show');
-    if (autoTestContent) autoTestContent.classList.add('hide');
 
-    console.log('Initialized to Home page');
+    if (welcomeMessage) {
+        welcomeMessage.classList.remove('hide');
+        welcomeMessage.classList.add('show');
+        welcomeMessage.style.display = 'block';
+    }
+
+    if (autoTestContent) {
+        autoTestContent.classList.remove('show');
+        autoTestContent.classList.add('hide');
+        autoTestContent.style.display = 'none';
+    }
+
+    console.log('✅ Home page initialized');
 }
 
-// Initialize all event listeners
-function initializeEventListeners() {
-    console.log('Setting up event listeners...');
+// ================================================================================================
+// NAVIGATION FUNCTIONS
+// ================================================================================================
 
-    // File upload events
-    if (uploadArea) {
-        uploadArea.addEventListener('dragover', handleDragOver);
-        uploadArea.addEventListener('dragleave', handleDragLeave);
-        uploadArea.addEventListener('drop', handleDrop);
-        uploadArea.addEventListener('click', function() {
-            fileInput.click();
-        });
+function showHome() {
+    console.log('🏠 Showing Home page');
+
+    // Update navigation state
+    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+    const homeNavItem = document.querySelectorAll('.nav-item')[0];
+    if (homeNavItem) homeNavItem.classList.add('active');
+
+    // Update content visibility
+    const dashboardTitle = document.getElementById('dashboardTitle');
+    const welcomeMessage = document.getElementById('welcomeMessage');
+    const autoTestContent = document.getElementById('autoTestContent');
+
+    if (dashboardTitle) dashboardTitle.textContent = 'Home';
+
+    if (welcomeMessage) {
+        welcomeMessage.classList.remove('hide');
+        welcomeMessage.classList.add('show');
+        welcomeMessage.style.display = 'block';
     }
 
-    if (fileInput) {
-        fileInput.addEventListener('change', handleFileSelect);
+    if (autoTestContent) {
+        autoTestContent.classList.remove('show');
+        autoTestContent.classList.add('hide');
+        autoTestContent.style.display = 'none';
     }
 
-    // Textarea events
-    if (textArea) {
-        textArea.addEventListener('input', handleTextAreaInput);
-    }
-
-    // Prevent default drag behaviors on document
-    document.addEventListener('dragover', preventDefault);
-    document.addEventListener('drop', preventDefault);
-
-    console.log('Event listeners initialized');
+    console.log('✅ Home page displayed');
 }
 
-// Utility functions
+function showAutoTest() {
+    console.log('🧪 Showing AutoTest page');
+
+    // Update navigation state
+    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+    const autoTestNavItem = document.querySelectorAll('.nav-item')[1];
+    if (autoTestNavItem) autoTestNavItem.classList.add('active');
+
+    // Update content visibility
+    const dashboardTitle = document.getElementById('dashboardTitle');
+    const welcomeMessage = document.getElementById('welcomeMessage');
+    const autoTestContent = document.getElementById('autoTestContent');
+
+    if (dashboardTitle) dashboardTitle.textContent = 'Auto Test';
+
+    if (welcomeMessage) {
+        welcomeMessage.classList.remove('show');
+        welcomeMessage.classList.add('hide');
+        welcomeMessage.style.display = 'none';
+    }
+
+    if (autoTestContent) {
+        autoTestContent.classList.remove('hide');
+        autoTestContent.classList.add('show');
+        autoTestContent.style.display = 'block';
+    }
+
+    console.log('✅ AutoTest page displayed');
+}
+
+// ================================================================================================
+// UTILITY FUNCTIONS
+// ================================================================================================
+
 function preventDefault(e) {
     e.preventDefault();
 }
@@ -90,11 +236,8 @@ function formatFileSize(bytes) {
 function getFileIcon(filename) {
     const ext = filename.split('.').pop().toLowerCase();
     const iconMap = {
-        'pdf': '📄', 'rtf': '📄',
-        'doc': '📝', 'docx': '📝',
-        'xls': '📊', 'xlsx': '📊',
-        'csv': '📈',
-        'txt': '📄',
+        'pdf': '📄', 'rtf': '📄', 'doc': '📝', 'docx': '📝',
+        'xls': '📊', 'xlsx': '📊', 'csv': '📈', 'txt': '📄',
         'js': '💻', 'py': '🐍', 'html': '🌐', 'css': '🎨',
         'jpg': '🖼️', 'jpeg': '🖼️', 'png': '🖼️', 'gif': '🖼️',
         'zip': '📦', 'rar': '📦'
@@ -102,35 +245,44 @@ function getFileIcon(filename) {
     return iconMap[ext] || '📄';
 }
 
-// Toast notification functions
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// ================================================================================================
+// TOAST NOTIFICATION SYSTEM
+// ================================================================================================
+
 function showToast(message, type = 'info') {
-    console.log('Toast:', message, type);
-    if (toastMessage && toast) {
-        toastMessage.textContent = message;
-        toast.className = `toast show ${type}`;
+    console.log(`📢 Toast: ${message} (${type})`);
+
+    if (elements.toastMessage && elements.toast) {
+        elements.toastMessage.textContent = message;
+        elements.toast.className = `toast show ${type}`;
 
         // Auto-hide after 5 seconds
-        setTimeout(() => {
-            hideToast();
-        }, 5000);
+        setTimeout(() => hideToast(), 5000);
     }
 }
 
 function hideToast() {
-    if (toast) {
-        toast.classList.remove('show');
+    if (elements.toast) {
+        elements.toast.classList.remove('show');
     }
 }
 
-// Progress indicator functions
-function showProgress(title, steps) {
-    if (!progressContainer || !progressTitle || !progressSteps) return;
+// ================================================================================================
+// PROGRESS INDICATOR SYSTEM
+// ================================================================================================
 
-    progressTitle.textContent = title;
-    progressContainer.classList.add('show');
+function showProgress(title, steps) {
+    if (!elements.progressContainer || !elements.progressTitle || !elements.progressSteps) return;
+
+    elements.progressTitle.textContent = title;
+    elements.progressContainer.classList.add('show');
 
     // Create step elements
-    progressSteps.innerHTML = '';
+    elements.progressSteps.innerHTML = '';
     steps.forEach((step, index) => {
         const stepElement = document.createElement('div');
         stepElement.className = 'progress-step';
@@ -138,19 +290,19 @@ function showProgress(title, steps) {
             <div class="step-icon pending" id="step-${index}">●</div>
             <span>${step}</span>
         `;
-        progressSteps.appendChild(stepElement);
+        elements.progressSteps.appendChild(stepElement);
     });
 }
 
 function updateProgress(percentage, status, activeStepIndex = -1) {
-    if (!progressBar || !progressPercentage || !progressStatus) return;
+    if (!elements.progressBar || !elements.progressPercentage || !elements.progressStatus) return;
 
-    progressBar.style.width = percentage + '%';
-    progressPercentage.textContent = Math.round(percentage) + '%';
-    progressStatus.textContent = status;
+    elements.progressBar.style.width = percentage + '%';
+    elements.progressPercentage.textContent = Math.round(percentage) + '%';
+    elements.progressStatus.textContent = status;
 
     // Update step states
-    const stepElements = progressSteps.querySelectorAll('.progress-step');
+    const stepElements = elements.progressSteps.querySelectorAll('.progress-step');
     stepElements.forEach((step, index) => {
         const icon = step.querySelector('.step-icon');
         step.classList.remove('active', 'completed');
@@ -173,101 +325,73 @@ function updateProgress(percentage, status, activeStepIndex = -1) {
 
 function hideProgress() {
     setTimeout(() => {
-        if (progressContainer) {
-            progressContainer.classList.remove('show');
+        if (elements.progressContainer) {
+            elements.progressContainer.classList.remove('show');
         }
     }, 1000);
 }
 
-// Navigation functions
-function showHome() {
-    console.log('Showing Home page');
+// ================================================================================================
+// FILE HANDLING SYSTEM
+// ================================================================================================
 
-    // Update navigation state
-    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-    document.querySelectorAll('.nav-item')[0].classList.add('active');
-
-    // Update content
-    const dashboardTitle = document.getElementById('dashboardTitle');
-    const welcomeMessage = document.getElementById('welcomeMessage');
-    const autoTestContent = document.getElementById('autoTestContent');
-
-    if (dashboardTitle) dashboardTitle.textContent = 'Home';
-    if (welcomeMessage) welcomeMessage.classList.add('show');
-    if (autoTestContent) autoTestContent.classList.add('hide');
-}
-
-function showAutoTest() {
-    console.log('Showing AutoTest page');
-
-    // Update navigation state
-    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-    document.querySelectorAll('.nav-item')[1].classList.add('active');
-
-    // Update content
-    const dashboardTitle = document.getElementById('dashboardTitle');
-    const welcomeMessage = document.getElementById('welcomeMessage');
-    const autoTestContent = document.getElementById('autoTestContent');
-
-    if (dashboardTitle) dashboardTitle.textContent = 'Auto Test';
-    if (welcomeMessage) welcomeMessage.classList.remove('show');
-    if (autoTestContent) autoTestContent.classList.remove('hide');
-}
-
-// File handling functions
 function handleDragOver(e) {
     e.preventDefault();
-    uploadArea.classList.add('dragover');
+    if (elements.uploadArea) elements.uploadArea.classList.add('dragover');
 }
 
 function handleDragLeave() {
-    uploadArea.classList.remove('dragover');
+    if (elements.uploadArea) elements.uploadArea.classList.remove('dragover');
 }
 
 function handleDrop(e) {
     e.preventDefault();
-    uploadArea.classList.remove('dragover');
+    if (elements.uploadArea) elements.uploadArea.classList.remove('dragover');
     const files = e.dataTransfer.files;
-    console.log('Files dropped:', files.length);
+    console.log(`📁 Files dropped: ${files.length}`);
     handleFiles(files);
 }
 
 function handleFileSelect(e) {
     const files = e.target.files;
-    console.log('Files selected:', files.length);
-    handleFiles(files);
+    console.log(`📁 Files selected: ${files.length}`);
+    if (files && files.length > 0) {
+        handleFiles(files);
+    }
 }
 
 async function handleFiles(files) {
     if (files.length === 0) {
-        console.log('No files to handle');
+        console.log('⚠️ No files to handle');
         return;
     }
 
-    console.log('Handling files:', Array.from(files).map(f => f.name));
+    console.log('📤 Processing files:', Array.from(files).map(f => f.name));
 
     try {
-        showProgress('Uploading Files', ['Preparing files', 'Uploading to server', 'Processing files']);
+        showProgress('Uploading Files', [
+            'Preparing files',
+            'Uploading to server',
+            'Processing files'
+        ]);
 
         const formData = new FormData();
         Array.from(files).forEach(file => {
-            console.log('Adding file to FormData:', file.name, file.size);
+            console.log(`📎 Adding file: ${file.name} (${formatFileSize(file.size)})`);
             formData.append('files', file);
         });
 
         updateProgress(30, 'Uploading files to server', 1);
 
-        console.log('Sending upload request...');
         const response = await fetch('/upload', {
             method: 'POST',
             body: formData
         });
 
-        console.log('Upload response status:', response.status);
         updateProgress(70, 'Processing uploaded files', 2);
 
         const result = await response.json();
-        console.log('Upload result:', result);
+        console.log('📥 Upload result:', result);
 
         if (result.success) {
             uploadedFiles = result.files;
@@ -276,12 +400,12 @@ async function handleFiles(files) {
             updateProgress(100, 'Upload completed successfully', 2);
             showToast(result.message, 'success');
         } else {
-            console.error('Upload failed:', result.message);
+            console.error('❌ Upload failed:', result.message);
             showToast(result.message, 'error');
         }
 
     } catch (error) {
-        console.error('Upload error:', error);
+        console.error('❌ Upload error:', error);
         showToast('Upload failed: ' + error.message, 'error');
     } finally {
         hideProgress();
@@ -289,7 +413,7 @@ async function handleFiles(files) {
 }
 
 function displayFileInfo(files, totalSize) {
-    if (!fileInfo) return;
+    if (!elements.fileInfo) return;
 
     let fileListHtml = '<div class="file-preview">';
     files.forEach(file => {
@@ -305,22 +429,32 @@ function displayFileInfo(files, totalSize) {
     });
     fileListHtml += '</div>';
 
-    fileInfo.innerHTML = `
+    elements.fileInfo.innerHTML = `
         <strong>Files Selected:</strong> ${files.length} file(s)<br>
         <strong>Total Size:</strong> ${formatFileSize(totalSize)}
         ${fileListHtml}
     `;
-    fileInfo.style.display = 'block';
+    elements.fileInfo.style.display = 'block';
 }
 
 function resetButtonStates() {
+    console.log('🔄 Resetting button states');
+
     const generateBtn = document.getElementById('generateBtn');
     const executeBtn = document.getElementById('executeBtn');
     const reviewBtn = document.getElementById('reviewBtn');
     const ingestBtn = document.getElementById('ingestBtn');
     const reportButtons = document.getElementById('reportButtons');
 
-    // Reset Generate Code button (only enabled after successful ingest)
+    // Reset global data
+    ingestedTestCases = [];
+    generatedScripts = [];
+    executionResults = [];
+
+    // Hide multi-test areas
+    hideMultiTestAreas();
+
+    // Reset button states
     if (generateBtn) {
         generateBtn.disabled = true;
         generateBtn.textContent = 'Generate Code';
@@ -328,7 +462,6 @@ function resetButtonStates() {
         generateBtn.style.cursor = 'not-allowed';
     }
 
-    // Reset Execute Code button (disabled until code is generated)
     if (executeBtn) {
         executeBtn.disabled = true;
         executeBtn.textContent = 'Execute Code';
@@ -336,7 +469,6 @@ function resetButtonStates() {
         executeBtn.style.cursor = 'not-allowed';
     }
 
-    // Reset Review Code button (disabled until code is executed)
     if (reviewBtn) {
         reviewBtn.disabled = true;
         reviewBtn.textContent = 'Review Code';
@@ -344,7 +476,6 @@ function resetButtonStates() {
         reviewBtn.style.cursor = 'not-allowed';
     }
 
-    // Reset Ingest button (enabled when files are uploaded)
     if (ingestBtn) {
         ingestBtn.disabled = false;
         ingestBtn.textContent = 'Ingest Test';
@@ -352,34 +483,798 @@ function resetButtonStates() {
         ingestBtn.style.cursor = 'pointer';
     }
 
-    if (textArea) textArea.value = '';
+    // Reset text area
+    if (elements.textArea) elements.textArea.value = '';
     updateCharCount();
-    if (codeActions) codeActions.classList.remove('show');
+    if (elements.codeActions) elements.codeActions.classList.remove('show');
     if (reportButtons) reportButtons.classList.remove('show');
 }
 
-// Text area functions
+async function executeCode() {
+    console.log('⚡ Starting code execution...');
+
+    if (generatedScripts.length === 0) {
+        showToast('Please generate Python test code first!', 'warning');
+        return;
+    }
+
+    const executeBtn = document.getElementById('executeBtn');
+    if (!executeBtn) return;
+
+    executeBtn.disabled = true;
+    executeBtn.classList.add('btn-loading');
+
+    try {
+        const steps = [
+            'Preparing Python execution environment',
+            'Connecting to test infrastructure',
+            'Running Python test cases',
+            'Collecting test results',
+            'Generating execution output'
+        ];
+
+        showProgress('Executing Python Test Code', steps);
+
+        for (let i = 0; i < steps.length; i++) {
+            const progress = ((i + 1) / steps.length) * 100;
+            updateProgress(progress, steps[i], i);
+            await delay(200 + Math.random() * 150);
+        }
+
+        const response = await fetch('/execute', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({})
+        });
+
+        const result = await response.json();
+        console.log('🚀 Execution result:', result);
+
+        if (result.success) {
+            // Store execution results
+            executionResults = result.execution_results;
+
+            // Update each text area with execution results
+            executionResults.forEach((execResult, index) => {
+                const textarea = document.getElementById(`testArea${index}`);
+                if (textarea) {
+                    const executionOutput = `=== EXECUTION RESULTS ===
+Test Case: ${execResult.test_case_name}
+Script: ${execResult.script_name}
+Connected Host: ${result.connected_host}
+Execution Status: ${execResult.success ? 'SUCCESS' : 'FAILED'}
+
+=== STDOUT ===
+${execResult.stdout}
+
+=== STDERR ===
+${execResult.stderr}
+
+=== EXECUTION COMPLETED ===`;
+
+                    textarea.value = executionOutput;
+                    updateTestAreaCharCount(index);
+                    autoResizeTestTextarea(index);
+                }
+            });
+
+            // Update button states
+            const generateBtn = document.getElementById('generateBtn');
+            const reviewBtn = document.getElementById('reviewBtn');
+
+            executeBtn.disabled = true;
+            executeBtn.classList.remove('btn-loading');
+            executeBtn.textContent = 'Code Executed ✓';
+            executeBtn.style.opacity = '0.6';
+            executeBtn.style.cursor = 'not-allowed';
+
+            if (generateBtn) {
+                generateBtn.disabled = true;
+                generateBtn.style.opacity = '0.6';
+            }
+
+            if (reviewBtn) {
+                reviewBtn.disabled = false;
+                reviewBtn.style.opacity = '1';
+                reviewBtn.style.cursor = 'pointer';
+            }
+
+            showToast(`Executed ${executionResults.length} Python test scripts successfully!`, 'success');
+        } else {
+            console.error('❌ Execute failed:', result.message);
+
+            // Reset button on failure
+            executeBtn.disabled = false;
+            executeBtn.classList.remove('btn-loading');
+            executeBtn.textContent = 'Execute Code';
+            executeBtn.style.opacity = '1';
+            executeBtn.style.cursor = 'pointer';
+            showToast(result.message, 'error');
+        }
+
+    } catch (error) {
+        console.error('❌ Execution error:', error);
+
+        // Reset button on error
+        executeBtn.disabled = false;
+        executeBtn.classList.remove('btn-loading');
+        executeBtn.textContent = 'Execute Code';
+        executeBtn.style.opacity = '1';
+        executeBtn.style.cursor = 'pointer';
+        showToast('Code execution failed: ' + error.message, 'error');
+    } finally {
+        hideProgress();
+    }
+}
+// ================================================================================================
+// MAIN FUNCTIONALITY - REVIEW CODE
+// ================================================================================================
+
+async function reviewCode() {
+    console.log('🔍 Starting code review...');
+
+    if (executionResults.length === 0) {
+        showToast('No execution results to review. Please execute Python code first!', 'warning');
+        return;
+    }
+
+    const reviewBtn = document.getElementById('reviewBtn');
+    if (!reviewBtn) return;
+
+    reviewBtn.disabled = true;
+    reviewBtn.classList.add('btn-loading');
+
+    try {
+        const steps = [
+            'Scanning Python code structure',
+            'Analyzing syntax and PEP 8 compliance',
+            'Checking Python best practices',
+            'Running security analysis',
+            'Generating Python recommendations',
+            'Compiling final review report'
+        ];
+
+        showProgress('Reviewing Python Code Quality', steps);
+
+        for (let i = 0; i < steps.length; i++) {
+            const progress = ((i + 1) / steps.length) * 100;
+            updateProgress(progress, steps[i], i);
+            await delay(350 + Math.random() * 200);
+        }
+
+        const response = await fetch('/review', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({})
+        });
+
+        const result = await response.json();
+        console.log('📋 Review result:', result);
+
+        if (result.success) {
+            // Update all text areas with the review report
+            generatedScripts.forEach((script, index) => {
+                const textarea = document.getElementById(`testArea${index}`);
+                if (textarea) {
+                    const individualReview = `=== CODE REVIEW REPORT ===
+Test Case: ${script.test_case_name}
+Script: ${script.script_name}
+
+${result.review_report}
+
+=== INDIVIDUAL ANALYSIS ===
+This review covers the specific test case: ${script.test_case_name}
+
+Click "Open Report" or "Download Report" for comprehensive analysis results.`;
+
+                    textarea.value = individualReview;
+                    updateTestAreaCharCount(index);
+                    autoResizeTestTextarea(index);
+                }
+            });
+
+            // Final button state management
+            const generateBtn = document.getElementById('generateBtn');
+            const executeBtn = document.getElementById('executeBtn');
+            const ingestBtn = document.getElementById('ingestBtn');
+            const reportButtons = document.getElementById('reportButtons');
+
+            if (generateBtn) {
+                generateBtn.disabled = true;
+                generateBtn.style.opacity = '0.6';
+            }
+            if (executeBtn) {
+                executeBtn.disabled = true;
+                executeBtn.style.opacity = '0.6';
+            }
+            if (ingestBtn) {
+                ingestBtn.disabled = true;
+                ingestBtn.style.opacity = '0.6';
+            }
+
+            reviewBtn.disabled = true;
+            reviewBtn.classList.remove('btn-loading');
+            reviewBtn.textContent = 'Review Completed ✓';
+            reviewBtn.style.opacity = '0.6';
+            reviewBtn.style.cursor = 'not-allowed';
+
+            if (reportButtons) reportButtons.classList.add('show');
+
+            showToast(`Reviewed ${generatedScripts.length} Python test scripts successfully!`, 'success');
+        } else {
+            // Reset button on failure
+            reviewBtn.disabled = false;
+            reviewBtn.classList.remove('btn-loading');
+            reviewBtn.textContent = 'Review Code';
+            reviewBtn.style.opacity = '1';
+            reviewBtn.style.cursor = 'pointer';
+            showToast(result.message, 'error');
+        }
+
+    } catch (error) {
+        console.error('❌ Review error:', error);
+
+        // Reset button on error
+        reviewBtn.disabled = false;
+        reviewBtn.classList.remove('btn-loading');
+        reviewBtn.textContent = 'Review Code';
+        reviewBtn.style.opacity = '1';
+        reviewBtn.style.cursor = 'pointer';
+        showToast('Code review failed: ' + error.message, 'error');
+    } finally {
+        hideProgress();
+    }
+}
+
+// ================================================================================================
+// INDIVIDUAL TEST CASE FUNCTIONS
+// ================================================================================================
+
+function saveTestCode(index) {
+    console.log(`💾 Saving test code for index: ${index}`);
+
+    const textarea = document.getElementById(`testArea${index}`);
+    if (!textarea) return;
+
+    const code = textarea.value.trim();
+    if (!code) {
+        showToast('No code to save!', 'warning');
+        return;
+    }
+
+    const script = generatedScripts[index];
+
+    fetch('/save_code', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            code: code,
+            test_case_id: script.id,
+            test_case_name: script.test_case_name
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(`Test Case ${script.id} saved successfully!`, 'success');
+        } else {
+            showToast(`Save failed: ${data.message}`, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('❌ Error saving code:', error);
+        showToast('Error saving code', 'error');
+    });
+}
+
+function downloadTestCode(index) {
+    console.log(`📥 Downloading test code for index: ${index}`);
+
+    const textarea = document.getElementById(`testArea${index}`);
+    if (!textarea) return;
+
+    const code = textarea.value.trim();
+    if (!code) {
+        showToast('No code to download!', 'warning');
+        return;
+    }
+
+    const script = generatedScripts[index];
+    const element = document.createElement('a');
+    const file = new Blob([code], { type: 'text/x-python' });
+    element.href = URL.createObjectURL(file);
+    element.download = `${script.script_name || `test_case_${script.id}`}.py`;
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+
+    showToast(`Test Case ${script.id} downloaded successfully!`, 'success');
+}
+
+// ================================================================================================
+// ORIGINAL CODE ACTIONS (FALLBACK FOR SINGLE TEXTAREA)
+// ================================================================================================
+
+function saveCode() {
+    console.log('💾 Saving code (single textarea mode)');
+
+    if (!elements.textArea) return;
+
+    const code = elements.textArea.value.trim();
+    if (!code) {
+        showToast('No code to save!', 'warning');
+        return;
+    }
+
+    // Save to localStorage as backup
+    localStorage.setItem('dashboard_code', code);
+    localStorage.setItem('dashboard_code_timestamp', new Date().toISOString());
+
+    fetch('/save_code', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ code: code })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(`${data.message}`, 'success');
+        } else {
+            showToast(`Save failed: ${data.message}`, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('❌ Error saving code:', error);
+        showToast('Error saving code to file', 'error');
+        showToast('Code saved to browser storage only', 'warning');
+    });
+}
+
+function downloadCode() {
+    console.log('📥 Downloading code (single textarea mode)');
+
+    if (!elements.textArea) return;
+
+    const fullText = elements.textArea.value.trim();
+
+    if (!fullText) {
+        showToast('No code to download!', 'warning');
+        return;
+    }
+
+    const codeMarker = '# Generated Python Test Code';
+    let codeToDownload = fullText;
+    const codeStartIndex = fullText.indexOf(codeMarker);
+
+    if (codeStartIndex !== -1) {
+        codeToDownload = fullText.substring(codeStartIndex);
+    }
+
+    const element = document.createElement('a');
+    const file = new Blob([codeToDownload], { type: 'text/x-python' });
+    element.href = URL.createObjectURL(file);
+    element.download = `generated-test-suite-${new Date().toISOString().slice(0,10)}.py`;
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+
+    showToast('Python test code downloaded successfully!', 'success');
+}
+
+// ================================================================================================
+// REPORT FUNCTIONS
+// ================================================================================================
+
+async function openReport() {
+    console.log('📊 Opening report...');
+
+    try {
+        const response = await fetch('/open-report', { method: 'HEAD' });
+        if (!response.ok) {
+            showToast('Report not found on server.', 'error');
+            return;
+        }
+        window.open('/open-report', '_blank');
+        showToast('Report opened in new tab', 'success');
+    } catch (err) {
+        console.error('❌ Failed to open report:', err);
+        showToast('Failed to open report.', 'error');
+    }
+}
+
+async function downloadReport() {
+    console.log('📥 Downloading report...');
+
+    try {
+        const response = await fetch('/download-report', { method: 'HEAD' });
+        if (!response.ok) {
+            showToast('Report not found on server.', 'error');
+            return;
+        }
+        const link = document.createElement('a');
+        link.href = '/download-report';
+        link.download = 'combinedreport.html';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showToast('Report download started.', 'success');
+    } catch (err) {
+        console.error('❌ Failed to download report:', err);
+        showToast('Failed to download report.', 'error');
+    }
+}
+
+// ================================================================================================
+// KEYBOARD SHORTCUTS AND ACCESSIBILITY
+// ================================================================================================
+
+document.addEventListener('keydown', function(e) {
+    // Ctrl/Cmd + S to save code
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        if (generatedScripts.length > 0) {
+            // Save all test codes
+            generatedScripts.forEach((script, index) => {
+                saveTestCode(index);
+            });
+        } else {
+            saveCode();
+        }
+    }
+
+    // Ctrl/Cmd + D to download code
+    if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+        e.preventDefault();
+        if (generatedScripts.length > 0) {
+            // Download all test codes
+            generatedScripts.forEach((script, index) => {
+                downloadTestCode(index);
+            });
+        } else {
+            downloadCode();
+        }
+    }
+
+    // Escape to close toast
+    if (e.key === 'Escape') {
+        hideToast();
+    }
+});
+
+// ================================================================================================
+// ERROR HANDLING AND LOGGING
+// ================================================================================================
+
+window.addEventListener('error', function(event) {
+    console.error('❌ Global error:', event.error);
+    showToast('An unexpected error occurred. Please check the console for details.', 'error');
+});
+
+window.addEventListener('unhandledrejection', function(event) {
+    console.error('❌ Unhandled promise rejection:', event.reason);
+    showToast('An unexpected error occurred. Please check the console for details.', 'error');
+});
+
+// ================================================================================================
+// PERFORMANCE MONITORING
+// ================================================================================================
+
+function measurePerformance(functionName, fn) {
+    return async function(...args) {
+        const startTime = performance.now();
+        try {
+            const result = await fn.apply(this, args);
+            const endTime = performance.now();
+            console.log(`⚡ ${functionName} completed in ${(endTime - startTime).toFixed(2)}ms`);
+            return result;
+        } catch (error) {
+            const endTime = performance.now();
+            console.error(`❌ ${functionName} failed after ${(endTime - startTime).toFixed(2)}ms:`, error);
+            throw error;
+        }
+    };
+}
+
+// Wrap main functions with performance monitoring
+const originalIngestTest = ingestTest;
+const originalGenerateCode = generateCode;
+const originalExecuteCode = executeCode;
+const originalReviewCode = reviewCode;
+
+ingestTest = measurePerformance('ingestTest', originalIngestTest);
+generateCode = measurePerformance('generateCode', originalGenerateCode);
+executeCode = measurePerformance('executeCode', originalExecuteCode);
+reviewCode = measurePerformance('reviewCode', originalReviewCode);
+
+// ================================================================================================
+// GLOBAL FUNCTION EXPORTS FOR ONCLICK HANDLERS
+// ================================================================================================
+
+// Make sure all functions are globally available for onclick handlers
+window.showHome = showHome;
+window.showAutoTest = showAutoTest;
+window.ingestTest = ingestTest;
+window.generateCode = generateCode;
+window.executeCode = executeCode;
+window.reviewCode = reviewCode;
+window.saveCode = saveCode;
+window.downloadCode = downloadCode;
+window.saveTestCode = saveTestCode;
+window.downloadTestCode = downloadTestCode;
+window.downloadReport = downloadReport;
+window.openReport = openReport;
+window.updateTestAreaCharCount = updateTestAreaCharCount;
+window.autoResizeTestTextarea = autoResizeTestTextarea;
+window.hideToast = hideToast;
+
+// ================================================================================================
+// INITIALIZATION COMPLETE
+// ================================================================================================
+
+console.log('🎉 Cognizant AutoTest Dashboard - Complete JavaScript Loaded Successfully!');
+console.log('📱 Multi-test case support enabled');
+console.log('🔧 All functions exported globally');
+console.log('⚡ Performance monitoring active');
+console.log('♿ Accessibility features enabled');
+console.log('🛡️ Error handling configured');
+
+// ================================================================================================
+// DEVELOPMENT HELPERS (Remove in production)
+// ================================================================================================
+
+if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    // Development mode helpers
+    console.log('🔧 Development mode detected');
+
+    // Add debug info to window object for console access
+    window.debugInfo = {
+        uploadedFiles,
+        ingestedTestCases,
+        generatedScripts,
+        executionResults,
+        elements
+    };
+
+    // Log performance metrics
+    if ('performance' in window) {
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                const navTiming = performance.getEntriesByType('navigation')[0];
+                console.log(`📊 Page load time: ${navTiming.loadEventEnd - navTiming.fetchStart}ms`);
+            }, 0);
+        });
+    }
+}
+
+// ================================================================================================
+// END OF FILE
+// ================================================================================================
+
+// ================================================================================================
+// TEXT AREA MANAGEMENT
+// ================================================================================================
+
 function handleTextAreaInput() {
     updateCharCount();
     autoResizeTextarea();
 }
 
 function updateCharCount() {
-    if (!textArea || !charCount) return;
+    if (!elements.textArea || !elements.charCount) return;
 
-    const count = textArea.value.length;
-    charCount.textContent = `${count} character${count !== 1 ? 's' : ''}`;
+    const count = elements.textArea.value.length;
+    elements.charCount.textContent = `${count} character${count !== 1 ? 's' : ''}`;
 }
 
 function autoResizeTextarea() {
-    if (!textArea) return;
+    if (!elements.textArea) return;
 
-    textArea.style.height = 'auto';
-    textArea.style.height = Math.max(180, textArea.scrollHeight) + 'px';
+    elements.textArea.style.height = 'auto';
+    elements.textArea.style.height = Math.max(180, elements.textArea.scrollHeight) + 'px';
 }
 
-// Main functionality functions
+function updateTestAreaCharCount(index) {
+    const textarea = document.getElementById(`testArea${index}`);
+    const charCount = document.getElementById(`charCount${index}`);
+
+    if (textarea && charCount) {
+        const count = textarea.value.length;
+        charCount.textContent = `${count} character${count !== 1 ? 's' : ''}`;
+    }
+}
+
+function autoResizeTestTextarea(index) {
+    const textarea = document.getElementById(`testArea${index}`);
+    if (textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = Math.max(250, textarea.scrollHeight) + 'px';
+    }
+}
+
+// ================================================================================================
+// MULTI-TEST AREA MANAGEMENT
+// ================================================================================================
+
+function createMultiTestAreas() {
+    // Only create multi-test areas if there are multiple scripts
+    if (!generatedScripts || generatedScripts.length <= 1) {
+        console.log('🏗️ Single or no test case - skipping multi-test areas');
+        return;
+    }
+
+    console.log('🏗️ Creating multi-test areas for', generatedScripts.length, 'scripts');
+
+    const container = document.querySelector('.dashboard-container');
+
+    // Remove existing multi-test areas
+    const existingMultiAreas = document.getElementById('multiTestAreas');
+    if (existingMultiAreas) {
+        existingMultiAreas.remove();
+    }
+
+    // Create new multi-test areas container
+    const multiTestAreas = document.createElement('div');
+    multiTestAreas.id = 'multiTestAreas';
+    multiTestAreas.className = 'multi-test-areas';
+    multiTestAreas.style.marginBottom = '25px';
+
+    // Create test areas for each generated script
+    generatedScripts.forEach((script, index) => {
+        const testAreaGroup = document.createElement('div');
+        testAreaGroup.className = 'test-area-group';
+        testAreaGroup.style.cssText = `
+            margin-bottom: 30px;
+            border: 2px solid #e5e7eb;
+            border-radius: 15px;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.9);
+        `;
+
+        testAreaGroup.innerHTML = `
+            <div class="test-area-header" style="
+                background: linear-gradient(135deg, #1e40af, #3b82f6);
+                color: white;
+                padding: 15px 20px;
+                font-weight: 600;
+                font-size: 1.1rem;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            ">
+                <span>Test Case ${script.id}: ${script.test_case_name}</span>
+                <div style="
+                    background: rgba(255, 255, 255, 0.2);
+                    border-radius: 50%;
+                    width: 30px;
+                    height: 30px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-weight: bold;
+                ">${script.id}</div>
+            </div>
+            <div class="test-area-content" style="position: relative;">
+                <textarea 
+                    class="test-area-textarea" 
+                    id="testArea${index}"
+                    placeholder="Content for ${script.test_case_name} will appear here..."
+                    oninput="updateTestAreaCharCount(${index}); autoResizeTestTextarea(${index})"
+                    style="
+                        width: 100%;
+                        min-height: 250px;
+                        padding: 20px;
+                        border: none;
+                        font-family: 'Courier New', monospace;
+                        font-size: 0.9rem;
+                        resize: vertical;
+                        background: white;
+                        color: #374151;
+                        border-radius: 0 0 13px 13px;
+                    "
+                ></textarea>
+                <div class="test-area-char-count" id="charCount${index}" style="
+                    position: absolute;
+                    bottom: 12px;
+                    right: 18px;
+                    color: #6b7280;
+                    font-size: 0.8rem;
+                    background: rgba(255, 255, 255, 0.95);
+                    padding: 4px 8px;
+                    border-radius: 6px;
+                    border: 1px solid #e5e7eb;
+                ">0 characters</div>
+                <div class="test-area-actions" style="
+                    position: absolute;
+                    top: 12px;
+                    right: 18px;
+                    display: flex;
+                    gap: 8px;
+                    z-index: 10;
+                ">
+                    <button class="action-btn save-btn" onclick="saveTestCode(${index})" title="Save code" style="
+                        width: 36px;
+                        height: 36px;
+                        border: none;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 16px;
+                        background: #22c55e;
+                        color: white;
+                        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+                        transition: all 0.3s ease;
+                    ">
+                        💾
+                    </button>
+                    <button class="action-btn download-btn" onclick="downloadTestCode(${index})" title="Download code" style="
+                        width: 36px;
+                        height: 36px;
+                        border: none;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 16px;
+                        background: #3b82f6;
+                        color: white;
+                        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+                        transition: all 0.3s ease;
+                    ">
+                        📥
+                    </button>
+                </div>
+            </div>
+        `;
+        multiTestAreas.appendChild(testAreaGroup);
+    });
+
+    // Insert safely without causing DOM errors
+    if (container) {
+        container.appendChild(multiTestAreas);
+    }
+
+    // Hide single text area only when showing multi-test areas
+    const singleTextAreaContainer = document.querySelector('.text-area-container');
+    if (singleTextAreaContainer) {
+        singleTextAreaContainer.style.display = 'none';
+    }
+
+    console.log('✅ Multi-test areas created successfully');
+}
+
+function hideMultiTestAreas() {
+    console.log('🗑️ Hiding multi-test areas');
+
+    const multiTestAreas = document.getElementById('multiTestAreas');
+    if (multiTestAreas) {
+        multiTestAreas.remove();
+    }
+
+    // Show single text area
+    const singleTextAreaContainer = document.querySelector('.text-area-container');
+    if (singleTextAreaContainer) {
+        singleTextAreaContainer.style.display = 'block';
+    }
+}
+
+// ================================================================================================
+// MAIN FUNCTIONALITY - INGEST TEST
+// ================================================================================================
+
 async function ingestTest() {
+    console.log('📥 Starting test ingestion...');
+
     if (uploadedFiles.length === 0) {
         showToast('Please upload files first!', 'warning');
         return;
@@ -416,17 +1311,21 @@ async function ingestTest() {
         });
 
         const result = await response.json();
+        console.log('📊 Ingestion result:', result);
 
         updateProgress(100, 'Test data ingested successfully', 3);
 
         if (result.success) {
-            if (textArea) {
-                textArea.value = `Test ingestion completed!\n\nFiles processed: ${uploadedFiles.length}\n${result.processed_files.map(f => `- ${f.name}: ${f.test_cases}`).join('\n')}\n\nReady for Python test code generation.`;
+            // Store ingested test cases
+            ingestedTestCases = result.processed_files;
+
+            if (elements.textArea) {
+                elements.textArea.value = `Test ingestion completed!\n\nFiles processed: ${uploadedFiles.length}\nTest cases found: ${result.total_test_cases}\n\n${result.processed_files.map(f => `- ${f.name}: ${f.test_cases}`).join('\n')}\n\nReady for Python test code generation.`;
                 updateCharCount();
                 autoResizeTextarea();
             }
 
-            // Enable Generate Code button after successful ingestion
+            // Enable Generate Code button
             const generateBtn = document.getElementById('generateBtn');
             if (generateBtn) {
                 generateBtn.disabled = false;
@@ -440,7 +1339,7 @@ async function ingestTest() {
         }
 
     } catch (error) {
-        console.error('Ingestion error:', error);
+        console.error('❌ Ingestion error:', error);
         showToast('Ingestion failed: ' + error.message, 'error');
     } finally {
         ingestBtn.disabled = false;
@@ -449,7 +1348,13 @@ async function ingestTest() {
     }
 }
 
+// ================================================================================================
+// MAIN FUNCTIONALITY - GENERATE CODE
+// ================================================================================================
+
 async function generateCode() {
+    console.log('🔧 Starting code generation...');
+
     const generateBtn = document.getElementById('generateBtn');
     if (!generateBtn) return;
 
@@ -478,54 +1383,68 @@ async function generateCode() {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ input_text: textArea ? textArea.value : '' })
+            body: JSON.stringify({ input_text: elements.textArea ? elements.textArea.value : '' })
         });
 
         const result = await response.json();
+        console.log('🐍 Generation result:', result);
 
         if (result.success) {
-            if (textArea) {
-                // Clear previous content and show only the generated code
-                textArea.value = result.generated_code;
-                updateCharCount();
-                autoResizeTextarea();
+            // Store generated scripts
+            generatedScripts = result.generated_scripts;
+
+            // Create multi test areas
+            //createMultiTestAreas();
+            if (generatedScripts.length > 1) {
+                createMultiTestAreas();
+            } else {
+                // Show single text area for single test case
+                const singleTextAreaContainer = document.querySelector('.text-area-container');
+                if (singleTextAreaContainer) {
+                    singleTextAreaContainer.style.display = 'block';
+                }
             }
 
-            // Button state management after code generation
+            // Populate each text area with its corresponding code
+            generatedScripts.forEach((script, index) => {
+                const textarea = document.getElementById(`testArea${index}`);
+                if (textarea) {
+                    textarea.value = script.code;
+                    updateTestAreaCharCount(index);
+                    autoResizeTestTextarea(index);
+                }
+            });
+
+            // Update button states
             const executeBtn = document.getElementById('executeBtn');
             const ingestBtn = document.getElementById('ingestBtn');
             const reviewBtn = document.getElementById('reviewBtn');
 
-            // Disable Generate Code button permanently after generation
             generateBtn.disabled = true;
             generateBtn.classList.remove('btn-loading');
             generateBtn.textContent = 'Code Generated ✓';
             generateBtn.style.opacity = '0.6';
             generateBtn.style.cursor = 'not-allowed';
 
-            // Enable only Execute Code button
             if (executeBtn) {
                 executeBtn.disabled = false;
                 executeBtn.style.opacity = '1';
                 executeBtn.style.cursor = 'pointer';
             }
 
-            // Keep other buttons disabled
             if (ingestBtn) {
                 ingestBtn.disabled = true;
                 ingestBtn.style.opacity = '0.6';
             }
+
             if (reviewBtn) {
                 reviewBtn.disabled = true;
                 reviewBtn.style.opacity = '0.6';
             }
 
-            // Show code actions (save/download buttons)
-            if (codeActions) codeActions.classList.add('show');
-
-            showToast(result.message + ' - Ready for execution!', 'success');
+            showToast(`Generated ${generatedScripts.length} Python test scripts successfully!`, 'success');
         } else {
-            // Reset button state if generation failed
+            // Reset button on failure
             generateBtn.disabled = false;
             generateBtn.classList.remove('btn-loading');
             generateBtn.textContent = 'Generate Code';
@@ -535,8 +1454,9 @@ async function generateCode() {
         }
 
     } catch (error) {
-        console.error('Generation error:', error);
-        // Reset button state if error occurred
+        console.error('❌ Generation error:', error);
+
+        // Reset button on error
         generateBtn.disabled = false;
         generateBtn.classList.remove('btn-loading');
         generateBtn.textContent = 'Generate Code';
@@ -548,20 +1468,14 @@ async function generateCode() {
     }
 }
 
+// ================================================================================================
+// MAIN FUNCTIONALITY - EXECUTE CODE
+// ================================================================================================
+
 async function executeCode() {
-    console.log('Execute code function called');
+    console.log('⚡ Starting code execution...');
 
-    if (!textArea || !textArea.value.trim()) {
-        showToast('Please generate Python test code first!', 'warning');
-        return;
-    }
-
-    // Check if we have Python code
-    const hasGeneratedCode = textArea.value.includes('# Generated Python Test Code') ||
-                           textArea.value.includes('import unittest') ||
-                           textArea.value.includes('class AutoGeneratedTestSuite');
-
-    if (!hasGeneratedCode) {
+    if (generatedScripts.length === 0) {
         showToast('Please generate Python test code first!', 'warning');
         return;
     }
@@ -569,14 +1483,13 @@ async function executeCode() {
     const executeBtn = document.getElementById('executeBtn');
     if (!executeBtn) return;
 
-    console.log('Starting code execution...');
     executeBtn.disabled = true;
     executeBtn.classList.add('btn-loading');
 
     try {
         const steps = [
             'Preparing Python execution environment',
-            'Validating Python test code',
+            'Connecting to test infrastructure',
             'Running Python test cases',
             'Collecting test results',
             'Generating execution output'
@@ -590,57 +1503,71 @@ async function executeCode() {
             await delay(200 + Math.random() * 150);
         }
 
-        console.log('Sending execute request...');
         const response = await fetch('/execute', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ code: textArea.value })
+            body: JSON.stringify({})
         });
 
-        console.log('Execute response status:', response.status);
         const result = await response.json();
-        console.log('Execute result:', result);
+        console.log('🚀 Execution result:', result);
 
         if (result.success) {
-            if (textArea) {
-                textArea.value = result.execution_result;
-                updateCharCount();
-                autoResizeTextarea();
-            }
+            // Store execution results
+            executionResults = result.execution_results;
 
-            // Button state management after code execution
+            // Update each text area with execution results
+            executionResults.forEach((execResult, index) => {
+                const textarea = document.getElementById(`testArea${index}`);
+                if (textarea) {
+                    const executionOutput = `=== EXECUTION RESULTS ===
+Test Case: ${execResult.test_case_name}
+Script: ${execResult.script_name}
+Connected Host: ${result.connected_host}
+Execution Status: ${execResult.success ? 'SUCCESS' : 'FAILED'}
+
+=== STDOUT ===
+${execResult.stdout}
+
+=== STDERR ===
+${execResult.stderr}
+
+=== EXECUTION COMPLETED ===`;
+
+                    textarea.value = executionOutput;
+                    updateTestAreaCharCount(index);
+                    autoResizeTestTextarea(index);
+                }
+            });
+
+            // Update button states
             const generateBtn = document.getElementById('generateBtn');
             const reviewBtn = document.getElementById('reviewBtn');
 
-            // Disable Execute Code button permanently after execution
             executeBtn.disabled = true;
             executeBtn.classList.remove('btn-loading');
             executeBtn.textContent = 'Code Executed ✓';
             executeBtn.style.opacity = '0.6';
             executeBtn.style.cursor = 'not-allowed';
 
-            // Keep Generate Code button disabled
             if (generateBtn) {
                 generateBtn.disabled = true;
                 generateBtn.style.opacity = '0.6';
             }
 
-            // Enable only Review Code button
             if (reviewBtn) {
                 reviewBtn.disabled = false;
                 reviewBtn.style.opacity = '1';
                 reviewBtn.style.cursor = 'pointer';
             }
 
-            // Hide code actions since we're now in execution results mode
-            if (codeActions) codeActions.classList.remove('show');
-
-            showToast(result.message + ' - Ready for code review!', 'success');
+            showToast(`Executed ${executionResults.length} Python test scripts successfully!`, 'success');
         } else {
-            console.error('Execute failed:', result.message);
-            // Reset button state if execution failed
+            console.error('❌ Execute failed:', result.message);
+
+            // Reset button on failure
             executeBtn.disabled = false;
             executeBtn.classList.remove('btn-loading');
             executeBtn.textContent = 'Execute Code';
@@ -650,8 +1577,9 @@ async function executeCode() {
         }
 
     } catch (error) {
-        console.error('Execution error:', error);
-        // Reset button state if error occurred
+        console.error('❌ Execution error:', error);
+
+        // Reset button on error
         executeBtn.disabled = false;
         executeBtn.classList.remove('btn-loading');
         executeBtn.textContent = 'Execute Code';
@@ -663,9 +1591,15 @@ async function executeCode() {
     }
 }
 
+// ================================================================================================
+// MAIN FUNCTIONALITY - REVIEW CODE
+// ================================================================================================
+
 async function reviewCode() {
-    if (!textArea || !textArea.value.trim()) {
-        showToast('No code to review. Please execute Python code first!', 'warning');
+    console.log('🔍 Starting code review...');
+
+    if (executionResults.length === 0) {
+        showToast('No execution results to review. Please execute Python code first!', 'warning');
         return;
     }
 
@@ -680,7 +1614,7 @@ async function reviewCode() {
             'Scanning Python code structure',
             'Analyzing syntax and PEP 8 compliance',
             'Checking Python best practices',
-            'Evaluating test framework usage',
+            'Running security analysis',
             'Generating Python recommendations',
             'Compiling final review report'
         ];
@@ -698,25 +1632,40 @@ async function reviewCode() {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ code: textArea.value })
+            body: JSON.stringify({})
         });
 
         const result = await response.json();
+        console.log('📋 Review result:', result);
 
         if (result.success) {
-            if (textArea) {
-                textArea.value = result.review_report;
-                updateCharCount();
-                autoResizeTextarea();
-            }
+            // Update all text areas with the review report
+            generatedScripts.forEach((script, index) => {
+                const textarea = document.getElementById(`testArea${index}`);
+                if (textarea) {
+                    const individualReview = `=== CODE REVIEW REPORT ===
+Test Case: ${script.test_case_name}
+Script: ${script.script_name}
 
-            // Final button state management after review
+${result.review_report}
+
+=== INDIVIDUAL ANALYSIS ===
+This review covers the specific test case: ${script.test_case_name}
+
+Click "Open Report" or "Download Report" for comprehensive analysis results.`;
+
+                    textarea.value = individualReview;
+                    updateTestAreaCharCount(index);
+                    autoResizeTestTextarea(index);
+                }
+            });
+
+            // Final button state management
             const generateBtn = document.getElementById('generateBtn');
             const executeBtn = document.getElementById('executeBtn');
             const ingestBtn = document.getElementById('ingestBtn');
             const reportButtons = document.getElementById('reportButtons');
 
-            // Disable all main buttons permanently after review
             if (generateBtn) {
                 generateBtn.disabled = true;
                 generateBtn.style.opacity = '0.6';
@@ -730,19 +1679,17 @@ async function reviewCode() {
                 ingestBtn.style.opacity = '0.6';
             }
 
-            // Disable and mark Review button as completed
             reviewBtn.disabled = true;
             reviewBtn.classList.remove('btn-loading');
             reviewBtn.textContent = 'Review Completed ✓';
             reviewBtn.style.opacity = '0.6';
             reviewBtn.style.cursor = 'not-allowed';
 
-            // Show report download buttons
             if (reportButtons) reportButtons.classList.add('show');
 
-            showToast(result.message + ' - Report ready for download!', 'success');
+            showToast(`Reviewed ${generatedScripts.length} Python test scripts successfully!`, 'success');
         } else {
-            // Reset button state if review failed
+            // Reset button on failure
             reviewBtn.disabled = false;
             reviewBtn.classList.remove('btn-loading');
             reviewBtn.textContent = 'Review Code';
@@ -752,8 +1699,9 @@ async function reviewCode() {
         }
 
     } catch (error) {
-        console.error('Review error:', error);
-        // Reset button state if error occurred
+        console.error('❌ Review error:', error);
+
+        // Reset button on error
         reviewBtn.disabled = false;
         reviewBtn.classList.remove('btn-loading');
         reviewBtn.textContent = 'Review Code';
@@ -764,20 +1712,93 @@ async function reviewCode() {
         hideProgress();
     }
 }
-function saveCode() {
-    if (!textArea) return;
-    
-    const code = textArea.value.trim();
+
+// ================================================================================================
+// INDIVIDUAL TEST CASE FUNCTIONS
+// ================================================================================================
+
+function saveTestCode(index) {
+    console.log(`💾 Saving test code for index: ${index}`);
+
+    const textarea = document.getElementById(`testArea${index}`);
+    if (!textarea) return;
+
+    const code = textarea.value.trim();
     if (!code) {
         showToast('No code to save!', 'warning');
         return;
     }
-    
+
+    const script = generatedScripts[index];
+
+    fetch('/save_code', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            code: code,
+            test_case_id: script.id,
+            test_case_name: script.test_case_name
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(`Test Case ${script.id} saved successfully!`, 'success');
+        } else {
+            showToast(`Save failed: ${data.message}`, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('❌ Error saving code:', error);
+        showToast('Error saving code', 'error');
+    });
+}
+
+function downloadTestCode(index) {
+    console.log(`📥 Downloading test code for index: ${index}`);
+
+    const textarea = document.getElementById(`testArea${index}`);
+    if (!textarea) return;
+
+    const code = textarea.value.trim();
+    if (!code) {
+        showToast('No code to download!', 'warning');
+        return;
+    }
+
+    const script = generatedScripts[index];
+    const element = document.createElement('a');
+    const file = new Blob([code], { type: 'text/x-python' });
+    element.href = URL.createObjectURL(file);
+    element.download = `${script.script_name || `test_case_${script.id}`}.py`;
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+
+    showToast(`Test Case ${script.id} downloaded successfully!`, 'success');
+}
+
+// ================================================================================================
+// ORIGINAL CODE ACTIONS (FALLBACK FOR SINGLE TEXTAREA)
+// ================================================================================================
+
+function saveCode() {
+    console.log('💾 Saving code (single textarea mode)');
+
+    if (!elements.textArea) return;
+
+    const code = elements.textArea.value.trim();
+    if (!code) {
+        showToast('No code to save!', 'warning');
+        return;
+    }
+
     // Save to localStorage as backup
     localStorage.setItem('dashboard_code', code);
     localStorage.setItem('dashboard_code_timestamp', new Date().toISOString());
-    
-    // Save to server file system
+
     fetch('/save_code', {
         method: 'POST',
         headers: {
@@ -794,56 +1815,24 @@ function saveCode() {
         }
     })
     .catch(error => {
-        console.error('Error saving code:', error);
+        console.error('❌ Error saving code:', error);
         showToast('Error saving code to file', 'error');
-        // Fallback success message for localStorage save
         showToast('Code saved to browser storage only', 'warning');
     });
 }
 
-// Code action functions
-/*function saveCode() {
-    if (!textArea) return;
-
-    const code = textArea.value.trim();
-
-    if (!code) {
-        showToast('No code to save!', 'warning');
-        return;
-    }
-
-    // Save to localStorage as backup
-    //localStorage.setItem('dashboard_code', code);
-    //localStorage.setItem('dashboard_code_timestamp', new Date().toISOString());
-    fetch('/save-script', {
-	    method : 'POST',
-	    headers: { 
-		    'Content-Type': application/json',
-	    },
-	    body: JSON.stringify({ code: code })
-    })
-    .then(response => {
-	    if(response.ok){
-		    showToast('Python code saved successfully!', 'success');
-            } else {
-		    showToast(' Failed to save code', 'error');
-	    }
-     })
-     .catch(error => {
-	     showToast('ERROR' + error.message, 'error');
-}
-*/
 function downloadCode() {
-    if (!textArea) return;
+    console.log('📥 Downloading code (single textarea mode)');
 
-    const fullText = textArea.value.trim();
+    if (!elements.textArea) return;
+
+    const fullText = elements.textArea.value.trim();
 
     if (!fullText) {
         showToast('No code to download!', 'warning');
         return;
     }
 
-    // Look for Python code marker instead of JavaScript
     const codeMarker = '# Generated Python Test Code';
     let codeToDownload = fullText;
     const codeStartIndex = fullText.indexOf(codeMarker);
@@ -855,7 +1844,6 @@ function downloadCode() {
     const element = document.createElement('a');
     const file = new Blob([codeToDownload], { type: 'text/x-python' });
     element.href = URL.createObjectURL(file);
-    // Save as .py file instead of .js
     element.download = `generated-test-suite-${new Date().toISOString().slice(0,10)}.py`;
     document.body.appendChild(element);
     element.click();
@@ -864,413 +1852,13 @@ function downloadCode() {
     showToast('Python test code downloaded successfully!', 'success');
 }
 
-// Report functions
-/* function downloadReport() {
-    if (!textArea) return;
-
-    const reportContent = textArea.value.trim();
-
-    if (!reportContent) {
-        showToast('No report to download!', 'warning');
-        return;
-    }
-
-    // Convert plain text report to HTML format
-    const htmlReport = generateHTMLReport(reportContent);
-
-    const element = document.createElement('a');
-    const file = new Blob([htmlReport], { type: 'text/html' });
-    element.href = URL.createObjectURL(file);
-    element.download = `python-code-review-report-${new Date().toISOString().slice(0,10)}.html`;
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
-
-    showToast('HTML report downloaded successfully!', 'success');
-}
-
-function generateHTMLReport(reportContent) {
-    // Get current date and time
-    const now = new Date();
-    const reportDate = now.toLocaleDateString();
-    const reportTime = now.toLocaleTimeString();
-
-    // Process the report content to add HTML formatting
-    let formattedContent = reportContent
-        // Convert headers
-        .replace(/=== (.*?) ===/g, '<h2 class="section-header">$1</h2>')
-        // Convert checkmarks and X marks
-        .replace(/✅/g, '<span class="check-icon">✅</span>')
-        .replace(/✓/g, '<span class="success-icon">✓</span>')
-        .replace(/✗/g, '<span class="error-icon">✗</span>')
-        .replace(/⭐/g, '<span class="star-icon">⭐</span>')
-        .replace(/📊/g, '<span class="chart-icon">📊</span>')
-        .replace(/🔍/g, '<span class="search-icon">🔍</span>')
-        .replace(/💡/g, '<span class="idea-icon">💡</span>')
-        .replace(/⚠️/g, '<span class="warning-icon">⚠️</span>')
-        .replace(/🐍/g, '<span class="python-icon">🐍</span>')
-        // Convert bullet points
-        .replace(/^- (.*?)$/gm, '<li>$1</li>')
-        // Convert sections with colons
-        .replace(/^([A-Z][A-Z\s]+):$/gm, '<h3 class="subsection-header">$1</h3>')
-        // Convert key-value pairs
-        .replace(/^- ([^:]+): (.+)$/gm, '<div class="metric-item"><span class="metric-key">$1:</span> <span class="metric-value">$2</span></div>')
-        // Convert status indicators
-        .replace(/PASSED/g, '<span class="status-passed">PASSED</span>')
-        .replace(/FAILED/g, '<span class="status-failed">FAILED</span>')
-        .replace(/EXCELLENT/g, '<span class="rating-excellent">EXCELLENT</span>')
-        .replace(/GOOD/g, '<span class="rating-good">GOOD</span>')
-        .replace(/HIGH/g, '<span class="rating-high">HIGH</span>')
-        .replace(/LOW/g, '<span class="rating-low">LOW</span>')
-        // Convert line breaks
-        .replace(/\n\n/g, '</p><p>')
-        .replace(/\n/g, '<br>');
-
-    // Wrap orphaned <li> tags in <ul>
-    formattedContent = formattedContent.replace(/(<li>.*?<\/li>)/gs, '<ul>$1</ul>');
-
-    // Create the complete HTML document
-    const htmlTemplate = `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Python Code Review Report - ${reportDate}</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
-        
-        .header {
-            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-            position: relative;
-        }
-        
-        .header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
-            opacity: 0.3;
-        }
-        
-        .header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            position: relative;
-            z-index: 1;
-        }
-        
-        .header .subtitle {
-            font-size: 1.1rem;
-            opacity: 0.9;
-            position: relative;
-            z-index: 1;
-        }
-        
-        .report-meta {
-            background: #f8fafc;
-            padding: 20px 30px;
-            border-bottom: 1px solid #e5e7eb;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-        }
-        
-        .meta-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .meta-label {
-            font-weight: 600;
-            color: #374151;
-        }
-        
-        .meta-value {
-            color: #6b7280;
-        }
-        
-        .content {
-            padding: 40px;
-        }
-        
-        .section-header {
-            color: #1e40af;
-            font-size: 1.5rem;
-            margin: 30px 0 20px 0;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #3b82f6;
-            position: relative;
-        }
-        
-        .section-header:first-child {
-            margin-top: 0;
-        }
-        
-        .subsection-header {
-            color: #374151;
-            font-size: 1.2rem;
-            margin: 25px 0 15px 0;
-            font-weight: 600;
-        }
-        
-        .metric-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid #f3f4f6;
-        }
-        
-        .metric-key {
-            font-weight: 500;
-            color: #374151;
-        }
-        
-        .metric-value {
-            color: #6b7280;
-            font-weight: 600;
-        }
-        
-        .status-passed {
-            background: #10b981;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 0.85rem;
-            font-weight: 600;
-        }
-        
-        .status-failed {
-            background: #ef4444;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 0.85rem;
-            font-weight: 600;
-        }
-        
-        .rating-excellent {
-            background: #059669;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-weight: 600;
-        }
-        
-        .rating-good {
-            background: #0d9488;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-weight: 600;
-        }
-        
-        .rating-high {
-            background: #3b82f6;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-weight: 600;
-        }
-        
-        .rating-low {
-            background: #6b7280;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-weight: 600;
-        }
-        
-        .check-icon, .success-icon {
-            color: #10b981;
-            font-weight: bold;
-        }
-        
-        .error-icon {
-            color: #ef4444;
-            font-weight: bold;
-        }
-        
-        .warning-icon {
-            color: #f59e0b;
-        }
-        
-        .star-icon {
-            color: #fbbf24;
-        }
-        
-        .python-icon {
-            color: #3776ab;
-        }
-        
-        ul {
-            margin: 15px 0;
-            padding-left: 20px;
-        }
-        
-        li {
-            margin: 5px 0;
-            color: #374151;
-        }
-        
-        p {
-            margin: 15px 0;
-            color: #374151;
-            line-height: 1.8;
-        }
-        
-        .footer {
-            background: #f8fafc;
-            padding: 20px 30px;
-            text-align: center;
-            color: #6b7280;
-            border-top: 1px solid #e5e7eb;
-        }
-        
-        .footer .logo {
-            font-weight: 600;
-            color: #1e40af;
-            margin-bottom: 5px;
-        }
-        
-        /* Print styles 
-        @media print {
-            body {
-                background: white;
-                padding: 0;
-            }
-            
-            .container {
-                box-shadow: none;
-                border-radius: 0;
-            }
-            
-            .header {
-                background: #1e40af !important;
-                -webkit-print-color-adjust: exact;
-                color-adjust: exact;
-            }
-        }
-        
-        /* Responsive design 
-        @media (max-width: 768px) {
-            .container {
-                margin: 10px;
-                border-radius: 10px;
-            }
-            
-            .header {
-                padding: 20px;
-            }
-            
-            .header h1 {
-                font-size: 2rem;
-            }
-            
-            .content {
-                padding: 20px;
-            }
-            
-            .report-meta {
-                padding: 15px 20px;
-                grid-template-columns: 1fr;
-                gap: 10px;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>🐍 Python Code Review Report</h1>
-            <div class="subtitle">Generated by Cognizant Auto Test Dashboard</div>
-        </div>
-        
-        <div class="report-meta">
-            <div class="meta-item">
-                <span class="meta-label">📅 Generated:</span>
-                <span class="meta-value">${reportDate} at ${reportTime}</span>
-            </div>
-            <div class="meta-item">
-                <span class="meta-label">🐍 Language:</span>
-                <span class="meta-value">Python</span>
-            </div>
-            <div class="meta-item">
-                <span class="meta-label">🔧 Framework:</span>
-                <span class="meta-value">unittest</span>
-            </div>
-            <div class="meta-item">
-                <span class="meta-label">📊 Report Type:</span>
-                <span class="meta-value">Code Quality Analysis</span>
-            </div>
-        </div>
-        
-        <div class="content">
-            <p>${formattedContent}</p>
-        </div>
-        
-        <div class="footer">
-            <div class="logo">cognizant</div>
-            <div>Auto Test Generation — Execution — Code Review</div>
-            <div style="margin-top: 10px; font-size: 0.9rem;">
-                This report was automatically generated and should be reviewed by a qualified developer.
-            </div>
-        </div>
-    </div>
-</body>
-</html>`;
-
-    return htmlTemplate;
-}  */
-
-/* function openReport() {
-    if (!textArea) return;
-
-    const reportContent = textArea.value.trim();
-
-    if (!reportContent) {
-        showToast('No report to open!', 'warning');
-        return;
-    }
-
-    // Generate the same HTML content as download
-    const htmlReport = generateHTMLReport(reportContent);
-
-    // Open in new window
-    const newWindow = window.open('', '_blank');
-    newWindow.document.write(htmlReport);
-    newWindow.document.close();
-} */
+// ================================================================================================
+// REPORT FUNCTIONS
+// ================================================================================================
 
 async function openReport() {
+    console.log('📊 Opening report...');
+
     try {
         const response = await fetch('/open-report', { method: 'HEAD' });
         if (!response.ok) {
@@ -1278,13 +1866,16 @@ async function openReport() {
             return;
         }
         window.open('/open-report', '_blank');
+        showToast('Report opened in new tab', 'success');
     } catch (err) {
-        console.error(err);
+        console.error('❌ Failed to open report:', err);
         showToast('Failed to open report.', 'error');
     }
 }
 
 async function downloadReport() {
+    console.log('📥 Downloading report...');
+
     try {
         const response = await fetch('/download-report', { method: 'HEAD' });
         if (!response.ok) {
@@ -1299,15 +1890,138 @@ async function downloadReport() {
         document.body.removeChild(link);
         showToast('Report download started.', 'success');
     } catch (err) {
-        console.error(err);
+        console.error('❌ Failed to download report:', err);
         showToast('Failed to download report.', 'error');
     }
 }
 
-// Utility function for delays
-function delay(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+// ================================================================================================
+// KEYBOARD SHORTCUTS AND ACCESSIBILITY
+// ================================================================================================
+
+document.addEventListener('keydown', function(e) {
+    // Ctrl/Cmd + S to save code
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        if (generatedScripts.length > 0) {
+            // Save all test codes
+            generatedScripts.forEach((script, index) => {
+                saveTestCode(index);
+            });
+        } else {
+            saveCode();
+        }
+    }
+
+    // Ctrl/Cmd + D to download code
+    if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+        e.preventDefault();
+        if (generatedScripts.length > 0) {
+            // Download all test codes
+            generatedScripts.forEach((script, index) => {
+                downloadTestCode(index);
+            });
+        } else {
+            downloadCode();
+        }
+    }
+
+    // Escape to close toast
+    if (e.key === 'Escape') {
+        hideToast();
+    }
+});
+
+// ================================================================================================
+// ERROR HANDLING AND LOGGING
+// ================================================================================================
+
+window.addEventListener('error', function(event) {
+    console.error('❌ Global error:', event.error);
+    showToast('An unexpected error occurred. Please check the console for details.', 'error');
+});
+
+window.addEventListener('unhandledrejection', function(event) {
+    console.error('❌ Unhandled promise rejection:', event.reason);
+    showToast('An unexpected error occurred. Please check the console for details.', 'error');
+});
+
+// ================================================================================================
+// PERFORMANCE MONITORING
+// ================================================================================================
+
+function measurePerformance(functionName, fn) {
+    return async function(...args) {
+        const startTime = performance.now();
+        try {
+            const result = await fn.apply(this, args);
+            const endTime = performance.now();
+            console.log(`⚡ ${functionName} completed in ${(endTime - startTime).toFixed(2)}ms`);
+            return result;
+        } catch (error) {
+            const endTime = performance.now();
+            console.error(`❌ ${functionName} failed after ${(endTime - startTime).toFixed(2)}ms:`, error);
+            throw error;
+        }
+    };
 }
 
-// Initialize everything when page loads
-console.log('Script loaded, waiting for DOM...');
+// ================================================================================================
+// GLOBAL FUNCTION EXPORTS FOR ONCLICK HANDLERS
+// ================================================================================================
+
+// Make sure all functions are globally available for onclick handlers
+window.showHome = showHome;
+window.showAutoTest = showAutoTest;
+window.ingestTest = ingestTest;
+window.generateCode = generateCode;
+window.executeCode = executeCode;
+window.reviewCode = reviewCode;
+window.saveCode = saveCode;
+window.downloadCode = downloadCode;
+window.saveTestCode = saveTestCode;
+window.downloadTestCode = downloadTestCode;
+window.downloadReport = downloadReport;
+window.openReport = openReport;
+window.updateTestAreaCharCount = updateTestAreaCharCount;
+window.autoResizeTestTextarea = autoResizeTestTextarea;
+window.hideToast = hideToast;
+
+// ================================================================================================
+// INITIALIZATION COMPLETE
+// ================================================================================================
+
+console.log('🎉 Cognizant AutoTest Dashboard - Complete JavaScript Loaded Successfully!');
+console.log('📱 Multi-test case support enabled');
+console.log('🔧 All functions exported globally');
+console.log('⚡ Performance monitoring active');
+console.log('♿ Accessibility features enabled');
+console.log('🛡️ Error handling configured');
+
+// ================================================================================================
+// DEVELOPMENT HELPERS (Remove in production)
+// ================================================================================================
+
+if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    // Development mode helpers
+    console.log('🔧 Development mode detected');
+
+    // Add debug info to window object for console access
+    window.debugInfo = {
+        uploadedFiles,
+        ingestedTestCases,
+        generatedScripts,
+        executionResults,
+        elements
+    };
+
+    // Log performance metrics
+    if ('performance' in window) {
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                const navTiming = performance.getEntriesByType('navigation')[0];
+                console.log(`📊 Page load time: ${navTiming.loadEventEnd - navTiming.fetchStart}ms`);
+            }, 0);
+        });
+    }
+}

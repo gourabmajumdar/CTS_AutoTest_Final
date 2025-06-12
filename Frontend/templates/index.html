@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cognizant Auto Test Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="logo-section">
+            <div class="logo">
+                <img src="{{ url_for('static', filename='cog_logo.jpg') }}" alt="Cognizant Logo" class="logo-image">
+            </div>
+        </div>
+        <div class="header-title">Auto Test Generation—Execution—Code Review</div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="nav-item active" onclick="showHome()">
+            <div class="nav-icon">🏠</div>
+            <div>Home</div>
+        </div>
+        <div class="nav-item" onclick="showAutoTest()">
+            <div class="nav-icon">🧪</div>
+            <div>AutoTest</div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="dashboard-container">
+            <h1 class="dashboard-title" id="dashboardTitle">Home</h1>
+
+            <!-- Welcome Message (initially visible) -->
+            <div class="welcome-message show" id="welcomeMessage" style="text-align: left; padding: 30px;">
+                <h2 style="color: #1e40af; margin-bottom: 20px;">Welcome to AutoTest Dashboard</h2>
+
+                <p style="margin-bottom: 15px;">This comprehensive tool provides:</p>
+
+                <ul style="text-align: left; margin-left: 20px; line-height: 1.8;">
+                    <li>AI-powered automated test generation</li>
+                    <li>Multi-test case support with individual execution</li>
+                    <li>Remote test execution on Raspberry Pi infrastructure</li>
+                    <li>Comprehensive code quality analysis</li>
+                    <li>Professional reporting with multiple linters</li>
+                </ul>
+
+                <br><br>
+                <h4 style="text-align: left; margin-bottom: 20px; color: #1e40af;">
+                    Enhanced WorkFlow:
+                </h4>
+                <ol>
+                    <li>Upload multiple test case files</li>
+                    <li>Ingest and analyze test requirements</li>
+                    <li>Generate individual Python scripts for each test case</li>
+                    <li>Execute tests on remote infrastructure</li>
+                    <li>Review code quality with comprehensive analysis</li>
+                    <li>Download detailed reports</li>
+                </ol>
+
+                <br><br>
+                <h4 style="text-align: left; margin-bottom: 20px; color: #1e40af;">
+                    Expected Test Case Format:
+                </h4>
+                <ul>
+                    <li><strong>Test Case Name:</strong> Descriptive name of the test case</li>
+                    <li><strong>Purpose:</strong> Clear purpose and objective of the test</li>
+                    <li><strong>Pre-conditions:</strong> Prerequisites before test execution</li>
+                    <li><strong>Test Steps:</strong> Detailed commands and steps to execute</li>
+                    <li><strong>Expected Results:</strong> Expected outcomes and validation criteria</li>
+                </ul>
+
+                <br><br>
+                <h4 style="text-align: left; margin-bottom: 20px; color: #1e40af;">
+                    Multi-Test Case Features:
+                </h4>
+                <ul>
+                    <li>🔄 Auto-scaling text areas based on number of test cases</li>
+                    <li>🎯 Individual script generation for each test case</li>
+                    <li>⚡ Parallel execution support</li>
+                    <li>📊 Separate results display for each test case</li>
+                    <li>💾 Individual save/download options</li>
+                </ul>
+
+                <br><br>
+                <p style="text-align: left; font-style: italic; color: #4f46e5;">
+                    Click "AutoTest" to get started with uploading your test cases!
+                </p>
+            </div>
+
+            <!-- Auto Test Content (initially hidden) -->
+            <div class="auto-test-content hide" id="autoTestContent">
+                <div class="upload-area">
+                    <div class="upload-icon">📁</div>
+                    <div class="upload-text">Click to upload or drag & drop multiple test cases</div>
+                    <div class="upload-subtext">Support for file types: 'txt', 'rtf', 'pdf', 'doc', 'docx', 'odt'</div>
+                    <input type="file" id="fileInput" multiple>
+                    <div class="file-info" id="fileInfo"></div>
+                </div>
+
+                <button class="ingest-btn" onclick="ingestTest()" id="ingestBtn">Ingest Test Cases</button>
+
+                <!-- Single Text Area (for initial ingestion display) -->
+                <div class="text-area-container" id="singleTextAreaContainer">
+                    <textarea placeholder="Upload test case files and click 'Ingest Test Cases' to begin..." id="textArea"></textarea>
+                    <div class="char-count" id="charCount">0 characters</div>
+
+                    <div class="code-actions" id="codeActions">
+                        <button class="action-btn save-btn" onclick="saveCode()" title="Save code">
+                            💾
+                        </button>
+                        <button class="action-btn download-btn" onclick="downloadCode()" title="Download code">
+                            📥
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Multi-test areas will be dynamically inserted here -->
+
+                <div class="buttons">
+                    <button class="btn-primary" onclick="generateCode()" id="generateBtn" disabled>Generate Code</button>
+                    <button class="btn-secondary" onclick="executeCode()" id="executeBtn" disabled>Execute Code</button>
+                    <button class="btn-secondary" onclick="reviewCode()" id="reviewBtn" disabled>Review Code</button>
+                </div>
+
+                <!-- Progress Indicator -->
+                <div class="progress-container" id="progressContainer">
+                    <div class="progress-header">
+                        <div class="progress-spinner"></div>
+                        <div class="progress-title" id="progressTitle">Processing...</div>
+                    </div>
+                    <div class="progress-status" id="progressStatus">Initializing...</div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" id="progressBar" style="width: 0%"></div>
+                    </div>
+                    <div class="progress-percentage" id="progressPercentage">0%</div>
+                    <div class="progress-steps" id="progressSteps"></div>
+                </div>
+
+                <div class="report-buttons" id="reportButtons">
+                    <button class="btn-primary" onclick="downloadReport()">Download Report</button>
+                    <button class="btn-secondary" onclick="openReport()">Open Report</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <div class="toast-content">
+            <span class="toast-message" id="toastMessage"></span>
+            <button class="toast-close" onclick="hideToast()">&times;</button>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

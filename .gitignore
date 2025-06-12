@@ -8,6 +8,7 @@ __pycache__/
 venv/
 env/
 Frontend/myenv
+myenvironment/
 
 # Uploaded test files - DON'T COMMIT THESE
 static/uploads/*.rtf
@@ -33,6 +34,6 @@ static/uploads/*
 .DS_Store
 Thumbs.db
 
+
 # Generated reports
-*.html
-!templates/*.html
+generated-scripts/

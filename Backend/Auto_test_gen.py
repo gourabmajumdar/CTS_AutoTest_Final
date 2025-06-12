@@ -5,7 +5,7 @@ import torch
 import time
 
 # Initialize model/tokenizer and generator
-tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-2-7b-chat-hf")
+'''tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-2-7b-chat-hf")
 model = AutoModelForCausalLM.from_pretrained(
     "meta-llama/Llama-2-7b-chat-hf",
     device_map="auto",
@@ -16,7 +16,7 @@ generator = pipeline(
     "text-generation",
     model=model,
     tokenizer=tokenizer,
-)
+)'''
 
 def print_loading_dots(count=3, delay=0.5):
     for _ in range(count):
@@ -66,8 +66,8 @@ Write a Python script that:
     return prompt.strip()
 
 def save_script_to_file(code, test_case_name):
-    os.makedirs("/home/azureuser/Gourab/CTS_AutoTest/generated-scripts", exist_ok=True)
-    filename = os.path.join("/home/azureuser/Gourab/CTS_AutoTest/generated-scripts", test_case_name.lower().replace(' ', '_') + ".py")
+    os.makedirs(os.path.join(os.getcwd(), "..", "generated-scripts"), exist_ok=True)
+    filename = os.path.join(os.getcwd(), "..", "generated-scripts", test_case_name.lower().replace(' ', '_') + ".py")
     with open(filename, "w") as f:
         f.write(code + "\n")
     return filename
@@ -85,15 +85,15 @@ def process_test_case_file(filepath):
     print_loading_dots(50, 0.2)  # prints dots one by one with 0.5 sec delay
 
     script_name = fields['test_case_name'].lower().replace(' ', '_') + ".py"
-    default_script_path = os.path.join("/home/azureuser/Gourab/CTS_AutoTest/Backend/default_scripts", script_name)
+    default_script_path = os.path.join(os.getcwd(), "..", "Backend", "default_scripts", script_name)
 
     if os.path.exists(default_script_path):
         # Copy default script silently and return
-        os.makedirs("/home/azureuser/Gourab/CTS_AutoTest/generated-scripts", exist_ok=True)
-        output_path = os.path.join("/home/azureuser/Gourab/CTS_AutoTest/generated-scripts", script_name)
+        os.makedirs(os.path.join(os.getcwd(), "..", "generated-scripts"), exist_ok=True)
+        output_path = os.path.join(os.getcwd(), "..", "generated-scripts", script_name)
         with open(default_script_path, 'r') as src, open(output_path, 'w') as dst:
             dst.write(src.read())
-        print(f"Script generated : {script_name}")
+        print(f"Script generated: {script_name}")
         return
 
     # No default script found, generate using LLaMA
@@ -119,12 +119,16 @@ def process_test_case_file(filepath):
     print(f"Script generated : {script_name}")
 
 if __name__ == "__main__":
-    test_case_dir = "/home/azureuser/Gourab/CTS_AutoTest/test_case"
-
+    test_case_dir = os.path.join(os.getcwd(), "..", "test_case")
+    print(f"DEBUG: Current working directory: {os.getcwd()}")
+    print(f"DEBUG: Looking in test_case_dir: {test_case_dir}")
+    print(f"DEBUG: Directory exists: {os.path.exists(test_case_dir)}")
     for filename in os.listdir(test_case_dir):
-        if filename.endswith(".txt"):
+        print(f"DEBUG: Processing Filename: {filename}")
+        if filename.endswith((".txt", ".rtf")):
         #if filename.endswith((".txt", ".doc", ".docx")):
             filepath = os.path.join(test_case_dir, filename)
+            print(f"DEBUG: Processing Filepath: {filepath}")
             process_test_case_file(filepath)
             try:
                 os.remove(filepath)
