@@ -266,7 +266,7 @@ def generate_code():
     except Exception as e:
         return jsonify({'success': False, 'message': f'Generation error: {str(e)}'})
 
-
+'''
 @app.route('/save_code', methods=['POST'])
 def save_code():
     """Save generated code to file system"""
@@ -296,6 +296,59 @@ def save_code():
             #timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             #filename = f"autotest_{timestamp}.py"
             #filepath = os.path.join(script_dir, filename)
+
+        # Write the code to file
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.write(code)
+
+        return jsonify({
+            'success': True,
+            'message': f'Python code saved as {filename}',
+            'filename': filename,
+            'filepath': filepath
+        })
+
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error saving file: {str(e)}'})
+'''
+@app.route('/save_code', methods=['POST'])
+def save_code():
+    """Save generated or executed code to file system"""
+    global generated_scripts_info
+
+    try:
+        data = request.get_json()
+        code = data.get('code', '').strip()
+        test_case_id = data.get('test_case_id', None)
+        test_case_name = data.get('test_case_name', 'general')
+        is_execution_output = data.get('is_execution_output', False)
+
+        if not code:
+            return jsonify({'success': False, 'message': 'No code to save!'})
+
+        print(f"test_case_id - {test_case_id}, is_execution_output - {is_execution_output}")
+
+        if is_execution_output:
+            # Save executed code output to a new folder
+            base_dir = os.path.join(app.config['GENERATED_SCRIPTS_FOLDER'], 'execute_output')
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            output_dir = os.path.join(base_dir, f"{test_case_name}_{timestamp}")
+            os.makedirs(output_dir, exist_ok=True)
+
+            filename = f"{test_case_name}_output.py"
+            filepath = os.path.join(output_dir, filename)
+
+        elif test_case_id is not None and isinstance(test_case_id, int) and test_case_id <= len(generated_scripts_info):
+            # Multi-test case mode - update existing script
+            script_info = generated_scripts_info[test_case_id - 1]
+            filepath = script_info['file_path']
+            filename = script_info['script_name']
+
+        else:
+            # Single test case mode - update first script
+            script_info = generated_scripts_info[0]
+            filepath = script_info['file_path']
+            filename = script_info['script_name']
 
         # Write the code to file
         with open(filepath, 'w', encoding='utf-8') as f:

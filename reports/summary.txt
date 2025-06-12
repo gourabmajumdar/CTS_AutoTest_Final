@@ -1,9 +1,8 @@
 CODE REVIEW SUMMARY
 ====================
-Generated at: 2025-06-12 10:20:58
-Files analyzed: 2
-  - generated-scripts/check_the_router_mode_of_the_device.py
-  - generated-scripts/check_the_cable_modem_ip_address_of_the_device.py
+Generated at: 2025-06-12 20:41:51
+Files analyzed: 1
+  - generated-scripts/check_the_ssid_name_of_the_device.py
 
 BLACK:
   Return Code: 0
@@ -18,6 +17,6 @@ BANDIT:
   Status: Issues Found
 
 PYLINT:
-  Return Code: 30
+  Return Code: 22
   Status: Issues Found
 

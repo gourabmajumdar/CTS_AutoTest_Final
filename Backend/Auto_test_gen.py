@@ -5,7 +5,7 @@ import torch
 import time
 
 # Initialize model/tokenizer and generator
-'''tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-2-7b-chat-hf")
+tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-2-7b-chat-hf")
 model = AutoModelForCausalLM.from_pretrained(
     "meta-llama/Llama-2-7b-chat-hf",
     device_map="auto",
@@ -16,7 +16,7 @@ generator = pipeline(
     "text-generation",
     model=model,
     tokenizer=tokenizer,
-)'''
+)
 
 def print_loading_dots(count=3, delay=0.5):
     for _ in range(count):

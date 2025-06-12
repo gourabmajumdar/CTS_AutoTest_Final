@@ -801,7 +801,8 @@ function downloadTestCode(index) {
 // ORIGINAL CODE ACTIONS (FALLBACK FOR SINGLE TEXTAREA)
 // ================================================================================================
 
-function saveCode() {
+//function saveCode() {
+function saveCode(isExecutionOutput = false, testCaseName = 'general') {
     console.log('💾 Saving code (single textarea mode)');
 
     if (!elements.textArea) return;
@@ -816,6 +817,14 @@ function saveCode() {
     localStorage.setItem('dashboard_code', code);
     localStorage.setItem('dashboard_code_timestamp', new Date().toISOString());
 
+    const payload = {
+        code: code,
+        test_case_name: testCaseName
+    };
+ 
+    if (isExecutionOutput) {
+        payload.is_execution_output = true;
+    }
     fetch('/save_code', {
         method: 'POST',
         headers: {
@@ -844,8 +853,6 @@ function downloadCode() {
     if (!elements.textArea) return;
 
     const fullText = elements.textArea.value.trim();
-
-    console.log(fullText)
 
     if (!fullText) {
         showToast('No code to download!', 'warning');
@@ -1488,11 +1495,6 @@ async function generateCode() {
 
 async function executeCode() {
     console.log('⚡ Starting code execution...');
-    const saveBtn = document.getElementById('save-btn');
-    if (saveBtn) {
-        //saveBtn.style.display = 'none'; // or use 
-	saveBtn.remove();
-    }
 
     if (generatedScripts.length === 0) {
         showToast('Please generate Python test code first!', 'warning');
@@ -1896,13 +1898,12 @@ function saveCode() {
     });
 }
 
-/*function downloadCode() {
+function downloadCode() {
     console.log('📥 Downloading code (single textarea mode)');
 
     if (!elements.textArea) return;
 
     const fullText = elements.textArea.value.trim();
-    console.log(fullText)
 
     if (!fullText) {
         showToast('No code to download!', 'warning');
@@ -1926,52 +1927,6 @@ function saveCode() {
     document.body.removeChild(element);
 
     showToast('Python test code downloaded successfully!', 'success');
-}*/
-
-function downloadCode() {
-    console.log('📥 Downloading code (single textarea mode)');
-
-    if (!elements.textArea) return;
-
-    const fullText = elements.textArea.value.trim();
-    console.log(fullText);
-
-    if (!fullText) {
-        showToast('No code to download!', 'warning');
-        return;
-    }
-
-    const codeMarker = '# Generated Python Test Code';
-    const resultMarker = '=== EXECUTION RESULTS ===';
-
-    let fileType = 'text/plain';
-    let fileExtension = '.txt';
-    let fileNamePrefix = 'execution-results';
-    let contentToDownload = fullText;
-
-    if (fullText.includes(codeMarker)) {
-        const codeStartIndex = fullText.indexOf(codeMarker);
-        contentToDownload = fullText.substring(codeStartIndex);
-        fileType = 'text/x-python';
-        fileExtension = '.py';
-        fileNamePrefix = 'generated-test-suite';
-    } else if (fullText.includes(resultMarker)) {
-        const resultStartIndex = fullText.indexOf(resultMarker);
-        contentToDownload = fullText.substring(resultStartIndex);
-    } else {
-        showToast('No recognizable content to download!', 'warning');
-        return;
-    }
-
-    const element = document.createElement('a');
-    const file = new Blob([contentToDownload], { type: fileType });
-    element.href = URL.createObjectURL(file);
-    element.download = `${fileNamePrefix}-${new Date().toISOString().slice(0,10)}${fileExtension}`;
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
-
-    showToast(`${fileExtension} file downloaded successfully!`, 'success');
 }
 
 // ================================================================================================
