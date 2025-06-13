@@ -26,6 +26,7 @@ static/uploads/*
 
 # Log files
 *.log
+*.txt
 
 # IDE files
 .vscode/

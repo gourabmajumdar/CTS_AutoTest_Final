@@ -113,6 +113,7 @@ def parse_summary_for_tool_status(summary_content):
     return tool_status
 '''
 
+'''
 def parse_summary_for_tool_status(summary_content):
     """Parse summary.txt to get tool status information - UPDATED for new format"""
     tool_status = {}
@@ -157,6 +158,65 @@ def parse_summary_for_tool_status(summary_content):
             tool_status[current_tool]['has_issues'] = 'Issues Found' in status
 
     print("DEBUG - Parsed tool status:", tool_status)  # Debug line - remove this later
+    return tool_status
+'''
+
+def parse_summary_for_tool_status(summary_content):
+    """Parse summary.txt to get tool status information - FIXED for both icon and text formats"""
+    tool_status = {}
+
+    if not summary_content:
+        return tool_status
+
+    lines = summary_content.split('\n')
+    current_tool = None
+
+    for line in lines:
+        line = line.strip()
+
+        # Check for tool section headers - handle both formats
+        # Format 1: "BLACK - CODE FORMATTING:" (your current format)
+        # Format 2: "BLACK - CODE FORMATTING: ✅" (icon format)
+        if any(tool_name in line.upper() for tool_name in ['BLACK', 'FLAKE8', 'BANDIT', 'PYLINT']):
+            if ':' in line:
+                # Extract the tool name (first word before the dash or colon)
+                tool_part = line.split('-')[0].strip() if '-' in line else line.split(':')[0].strip()
+                current_tool = tool_part.lower()
+                tool_status[current_tool] = {}
+
+                # Check if line has icons for immediate status determination
+                if '✅' in line:
+                    tool_status[current_tool]['has_issues'] = False
+                    tool_status[current_tool]['status'] = 'Success'
+                elif '⚠️' in line or '❌' in line:
+                    tool_status[current_tool]['has_issues'] = True
+                    tool_status[current_tool]['status'] = 'Issues Found'
+                # If no icons, we'll determine status from subsequent "Status:" lines
+
+        # Parse return code
+        elif current_tool and 'Return Code:' in line:
+            try:
+                return_code = int(line.split('Return Code:')[1].strip())
+                tool_status[current_tool]['return_code'] = return_code
+            except (ValueError, IndexError):
+                tool_status[current_tool]['return_code'] = 'Unknown'
+
+        # Parse status - this is the key fix
+        elif current_tool and 'Status:' in line:
+            status = line.split('Status:')[1].strip()
+            tool_status[current_tool]['status'] = status
+
+            # FIXED: Properly determine has_issues based on status text
+            if 'Issues Found' in status or 'issues found' in status.lower():
+                tool_status[current_tool]['has_issues'] = True
+            elif 'Success' in status or 'success' in status.lower():
+                tool_status[current_tool]['has_issues'] = False
+            else:
+                # Fallback: if status is unclear, check return code
+                return_code = tool_status[current_tool].get('return_code', 0)
+                tool_status[current_tool]['has_issues'] = return_code != 0
+
+    print("DEBUG - Parsed tool status:", tool_status)
     return tool_status
 
 def extract_script_specific_issues_with_summary(tool_output, script_name, tool_name, summary_status):
@@ -380,7 +440,7 @@ def create_organized_html_report_with_summary(output_file):
         print(f"Organized HTML report created: {output_file}")
     except Exception as e:
         print(f"Error creating organized report: {e}")
-
+'''
 def clean_reports_folder():
     reports_folder = "reports/"
     ignored_files = ["combinedreport.html", "summary.txt"]
@@ -400,7 +460,31 @@ def clean_reports_folder():
         print(f"Cleanup completed: {files_removed} temporary files removed")
     else:
         print(f"Reports folder '{reports_folder}' does not exist.")
+'''
 
+
+# Delete all files in folder except combinedreport.html and summary.txt files
+def clean_reports_folder():
+    reports_folder = "reports/"
+    ignored_files = ["combinedreport.html", "summary.txt"]
+    if os.path.exists(reports_folder):
+        files_removed = 0
+        for filename in os.listdir(reports_folder):
+            file_path = os.path.join(reports_folder, filename)
+            try:
+                if filename in ignored_files:
+                    continue
+                if filename.startswith("summary"):
+                    continue
+                if os.path.isfile(file_path):
+                    os.remove(file_path)
+                    files_removed += 1
+                    print(f"Removed file: {file_path}")
+            except Exception as e:
+                print(f"Error removing file {file_path}: {e}")
+        print(f"Cleanup completed: {files_removed} temporary files removed")
+    else:
+        print(f"Reports folder '{reports_folder}' does not exist.")
 
 # Main execution
 if __name__ == "__main__":

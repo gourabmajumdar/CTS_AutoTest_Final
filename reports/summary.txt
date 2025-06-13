@@ -1,23 +1,22 @@
 CODE REVIEW SUMMARY
 ====================
-Generated at: 2025-06-13 09:50:24
-Files analyzed: 2
-  - generated-scripts/check_the_router_mode_of_the_device.py
+Generated at: 2025-06-13 14:58:11
+Files analyzed: 1
   - generated-scripts/check_the_cable_modem_ip_address_of_the_device.py
 
-BLACK - CODE FORMATTING: ✅
+BLACK - CODE FORMATTING:
   Return Code: 0
   Status: Success
 
-FLAKE8 - STYLE & LINT CHECKS: ⚠️
+FLAKE8 - STYLE & LINT CHECKS:
   Return Code: 1
   Status: Issues Found
 
-BANDIT - SECURITY ANALYSIS: ⚠️
+BANDIT - SECURITY ANALYSIS:
   Return Code: 1
   Status: Issues Found
 
-PYLINT - STATIC CODE ANALYSIS: ✅
+PYLINT - STATIC CODE ANALYSIS:
   Return Code: 0
   Status: Success
 

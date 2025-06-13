@@ -1023,46 +1023,15 @@ async function reviewCode() {
         console.log('📋 Review result:', result);
 
         if (result.success) {
-            // NEW: Handle individual reports for multiple test cases
-            if (result.individual_reports && result.individual_reports.length > 0) {
-                console.log('📋 Processing individual reports for multiple test cases');
-
-                // Update each text area with its individual report
-                result.individual_reports.forEach((report, index) => {
-                    const textarea = document.getElementById(`testArea${index}`);
-                    if (textarea) {
-                        const individualReview = `=== CODE REVIEW REPORT ===
-Test Case: ${report.test_case_name}
-Script: ${report.script_name}
-
-${report.review_report}
-
-████████████████████████████████████████████████████████████████████████████████████████████████████████████████
-██ ⚠️  IMPORTANT: Code review completed successfully. Check Errors/Issues before Execution. ⚠️  ██
-██ 🚀 Click "Execute Code" to run the reviewed test scripts if there are no Static Code Analysis Issue. 🚀 ██
-████████████████████████████████████████████████████████████████████████████████████████████████████████████████`;
-
-                        textarea.value = individualReview;
-                        updateTestAreaCharCount(index);
-                        autoResizeTestTextarea(index);
-                    }
-                });
-
-                showToast(`Reviewed ${result.individual_reports.length} Python test scripts with individual analysis!`, 'success');
-            }
-            // Handle single test case or fallback to old behavior
-            else {
-                console.log('📋 Processing single test case or fallback review');
-
-                // Update text areas with review reports (original behavior)
-                generatedScripts.forEach((script, index) => {
-                    const textarea = document.getElementById(`testArea${index}`);
-                    if (textarea) {
-                        const individualReview = `=== CODE REVIEW REPORT ===
+            // Update text areas with review reports
+            generatedScripts.forEach((script, index) => {
+                const textarea = document.getElementById(`testArea${index}`);
+                if (textarea) {
+                    const individualReview = `=== CODE REVIEW REPORT ===
 Test Case: ${script.test_case_name}
 Script: ${script.script_name}
 
-${result.review_report || 'Review completed successfully.'}
+${result.review_report}
 
 === INDIVIDUAL ANALYSIS ===
 This review covers the specific test case: ${script.test_case_name}
@@ -1072,26 +1041,23 @@ This review covers the specific test case: ${script.test_case_name}
 ██ 🚀 Click "Execute Code" to run the reviewed test scripts if there are no Static Code Analysis Issue. 🚀 ██
 ████████████████████████████████████████████████████████████████████████████████████████████████████████████████`;
 
-                        textarea.value = individualReview;
-                        updateTestAreaCharCount(index);
-                        autoResizeTestTextarea(index);
-                    }
-                });
+                    textarea.value = individualReview;
+                    updateTestAreaCharCount(index);
+                    autoResizeTestTextarea(index);
+                }
+            });
 
-                showToast(`Reviewed ${generatedScripts.length} Python test scripts successfully!`, 'success');
-            }
-
-            // Single test case handling (when only one script)
+            // Single test case handling
             if (generatedScripts.length === 1 && elements.textArea) {
                 const singleScript = generatedScripts[0];
                 const singleReview = `=== CODE REVIEW REPORT ===
 Test Case: ${singleScript.test_case_name}
 Script: ${singleScript.script_name}
 
-${result.review_report || result.main_summary || 'Review completed successfully.'}
+${result.review_report}
 
 ████████████████████████████████████████████████████████████████████████████████████████████████████████████████
-██ 🚀 Click "Execute Code" to run the reviewed test script if there are no Static Code Analysis Issue. 🚀 ██
+██ 🚀 Click "Execute Code" to run the reviewed test script.if there are no Static Code Analysis Issue. 🚀 ██
 ████████████████████████████████████████████████████████████████████████████████████████████████████████████████`;
 
                 elements.textArea.value = singleReview;
@@ -1130,6 +1096,7 @@ ${result.review_report || result.main_summary || 'Review completed successfully.
 
             if (reportButtons) reportButtons.classList.add('show');
 
+            showToast(`Reviewed ${generatedScripts.length} Python test scripts successfully! Ready for execution.`, 'success');
         } else {
             // Stop progress polling on failure
             stopProgressPolling();

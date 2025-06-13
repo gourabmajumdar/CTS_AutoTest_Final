@@ -74,8 +74,6 @@ def create_reports_folder():
             f.write(f"  - {file}\n")
         f.write("\n")
 
-
-
         for tool, data in results.items():
             f.write(f"{tool.upper()}:\n")
             f.write(f"  Return Code: {data['returncode']}\n")
@@ -85,75 +83,30 @@ def create_reports_folder():
             f.write("\n")
 '''
 
-
-def delete_old_summaries():
-    reports_folder = "reports/"
-    # List of files to ignore
-    ignored_files = ["summary.txt"]
-    if os.path.exists(reports_folder):
-        files_removed = 0
-        for filename in os.listdir(reports_folder):
-            file_path = os.path.join(reports_folder, filename)
-            try:
-                if filename.startswith("summary"):
-                    os.remove(file_path)
-                    files_removed += 1
-                    print(f"Removed file: {file_path}")
-            except Exception as e:
-                print(f"Error removing file {file_path}: {e}")
-        print(f"Cleanup completed: {files_removed} old summary files removed")
-    else:
-        print(f"Reports folder '{reports_folder}' does not exist.")
-
-
-"""Creates summary files based on the amount of files analyzed"""
-
-
 def write_summary(results, analyzed_files):
     """Simple version - adds icons to existing summary format with special pylint handling"""
-    # Generates combined summary
     with open("reports/summary.txt", "w", encoding="utf8") as f:
         f.write("CODE REVIEW SUMMARY\n")
         f.write("=" * 20 + "\n")
         f.write(f"Generated at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
         f.write(f"Files analyzed: {len(analyzed_files)}\n")
-
         for file in analyzed_files:
             f.write(f"  - {file}\n")
         f.write("\n")
 
         for tool, data in results.items():
-            f.write(f"{tool.upper()}:\n")
+            # Special logic for pylint - use red cross for issues, amber for others
+            if data['success']:
+                icon = "✅"
+            elif 'pylint' in tool.lower():
+                icon = "❌"  # Red cross for pylint issues
+            else:
+                icon = "⚠️"  # Amber warning for other tools
+
+            f.write(f"{tool.upper()}: {icon}\n")
             f.write(f"  Return Code: {data['returncode']}\n")
             f.write(f"  Status: {'Success' if data['success'] else 'Issues Found'}\n")
-            if 'issues_count' in data:
-                f.write(f"  Issues Found: {data['issues_count']}\n")
             f.write("\n")
-
-        i = 0
-    # Create individual summary files for each analyzed file
-    for file in analyzed_files:
-        i += 1
-        with open(f"reports/summary{i}.txt", "w", encoding="utf8") as f:
-            f.write("CODE REVIEW SUMMARY\n")
-            f.write("=" * 20 + "\n")
-            f.write(f"Generated at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-            f.write(f"File analyzed: {file}\n")
-
-            for tool, data in results.items():
-                # Special logic for pylint - use red cross for issues, amber for others
-                if data['success']:
-                    icon = "✅"
-                elif 'pylint' in tool.lower():
-                    icon = "❌"  # Red cross for pylint issues
-                else:
-                    icon = "⚠️"  # Amber warning for other tools
-
-                f.write(f"{tool.upper()}: {icon}\n")
-                f.write(f"  Return Code: {data['returncode']}\n")
-                f.write(f"  Status: {'Success' if data['success'] else 'Issues Found'}\n")
-                f.write("\n")
-
 
 # Main execution
 create_reports_folder()
@@ -209,8 +162,6 @@ results['pylint - Static Code Analysis'] = {
     'returncode': pylint_result.returncode,
     'success': pylint_result.returncode == 0
 }
-
-delete_old_summaries()
 
 # Write the summary file
 write_summary(results, all_files)

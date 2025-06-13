@@ -399,6 +399,7 @@ def generate_code():
         return jsonify({'success': False, 'message': f'Generation error: {str(e)}'})
 '''
 
+
 @app.route('/generate', methods=['POST'])
 def generate_code():
     """Generate Python test code for all test cases with real progress tracking"""
@@ -789,6 +790,7 @@ def execute_single_script(ssh, script_info):
             'success': False
         }
 
+
 @app.route('/review', methods=['POST'])
 def review_code():
     """Review Python code quality for individual or all test cases with real progress tracking"""
@@ -799,6 +801,9 @@ def review_code():
         # Clear previous progress and initialize
         clear_progress('review')
         update_progress('review', 0, 'Starting', 'Scanning Python code structure')
+
+        # Step 1: Preparation (17%)
+        update_progress('review', 17, 'Processing', 'Analyzing syntax and PEP 8 compliance')
 
         # Ensure reports directory exists
         reports_dir = os.path.join(os.getcwd(), '..', 'reports')
@@ -838,126 +843,123 @@ def review_code():
         # Step 5: Processing results (83%)
         update_progress('review', 83, 'Processing', 'Compiling final review report')
 
-        # NEW: Handle individual test case reviews vs all test cases
-        if test_case_id is not None:
-            # Single test case review - read specific summary file
-            summary_path = os.path.join(reports_dir, f'summary{test_case_id}.txt')
-            summary_content = ""
+        # Read the summary file
+        summary_path = os.path.join(reports_dir, 'summary.txt')
+        summary_content = ""
 
-            try:
-                with open(summary_path, 'r') as f:
-                    summary_content = f.read()
-                print(f"[INFO] Found individual summary at: {summary_path}")
-            except FileNotFoundError:
-                # Fallback to main summary if individual not found
-                main_summary_path = os.path.join(reports_dir, 'summary.txt')
-                try:
-                    with open(main_summary_path, 'r') as f:
-                        summary_content = f.read()
-                    print(f"[INFO] Used main summary as fallback: {main_summary_path}")
-                except FileNotFoundError:
-                    summary_content = f"""CODE REVIEW SUMMARY - TEST CASE {test_case_id}
+        try:
+            with open(summary_path, 'r') as f:
+                summary_content = f.read()
+            print(f"[INFO] Found summary at: {summary_path}")
+        except FileNotFoundError:
+            summary_content = f"""CODE REVIEW SUMMARY
 ====================
 Generated at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
 ANALYSIS STATUS:
 - Tox return code: {run_tox.returncode}
-- Individual summary file not found at: {summary_path}
-- Main summary file not found either
+- Summary file not found at: {summary_path}
 
 TOX OUTPUT:
 {run_tox.stdout}
 
 TOX ERRORS:
 {run_tox.stderr}
+
+FILES IN REPORTS DIRECTORY:
+{os.listdir(reports_dir) if os.path.exists(reports_dir) else 'Reports directory not found'}
 """
 
+        # Read individual tool reports for more detailed analysis
+        detailed_reports = {}
+        tool_files = ['flake8_output.txt', 'pylint_output.txt', 'bandit_output.txt', 'black_output.txt']
+
+        for tool_file in tool_files:
+            tool_path = os.path.join(reports_dir, tool_file)
+            if os.path.exists(tool_path):
+                try:
+                    with open(tool_path, 'r') as f:
+                        content = f.read()
+                        if content.strip():
+                            detailed_reports[tool_file.replace('_output.txt', '').upper()] = content
+                        else:
+                            detailed_reports[tool_file.replace('_output.txt',
+                                                               '').upper()] = "No issues found or no output generated."
+                except Exception as e:
+                    detailed_reports[
+                        tool_file.replace('_output.txt', '').upper()] = f"Error reading {tool_file}: {str(e)}"
+
+        if test_case_id is not None:
             # Generate review for specific test case
             review_report = f"""=== PYTHON CODE REVIEW REPORT ===
 Test Case ID: {test_case_id}
 Review Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 Language: Python
 
-=== INDIVIDUAL TEST CASE ANALYSIS ===
+=== EXECUTIVE SUMMARY ===
 {summary_content}
 
+=== INDIVIDUAL TEST CASE ANALYSIS ===
+This analysis covers Test Case {test_case_id} specifically.
+"""
+
+            # Add detailed tool reports
+            for tool, content in detailed_reports.items():
+                review_report += f"""
+=== {tool} ANALYSIS ===
+{content}
+"""
+
+            review_report += f"""
 === ACTIONS REQUIRED ===
 • Review the detailed analysis above
 • Click "Open Report" for HTML formatted results
 • Click "Download Report" to save the complete analysis
 
-Status: Code review completed successfully for Test Case {test_case_id}."""
-
-            # Step 6: Complete (100%)
-            update_progress('review', 100, 'Completed', 'Code review completed successfully!', True)
-
-            return jsonify({
-                'success': True,
-                'review_report': review_report,
-                'test_case_id': test_case_id,
-                'message': f'Python code review completed successfully for Test Case {test_case_id}'
-            })
+Status: Code review completed successfully."""
 
         else:
-            # Multiple test cases - return individual reports for each
-            individual_reports = []
-
-            # Read main summary for overall info
-            main_summary_path = os.path.join(reports_dir, 'summary.txt')
-            main_summary_content = ""
-            try:
-                with open(main_summary_path, 'r') as f:
-                    main_summary_content = f.read()
-            except FileNotFoundError:
-                main_summary_content = "Main summary not available"
-
-            # Generate individual reports for each generated script
-            for i, script_info in enumerate(generated_scripts_info):
-                test_case_id = script_info['id']
-                individual_summary_path = os.path.join(reports_dir, f'summary{test_case_id}.txt')
-
-                individual_summary_content = ""
-                try:
-                    with open(individual_summary_path, 'r') as f:
-                        individual_summary_content = f.read()
-                    print(f"[INFO] Found individual summary for Test Case {test_case_id}")
-                except FileNotFoundError:
-                    # Use main summary as fallback
-                    individual_summary_content = main_summary_content
-                    print(f"[INFO] Using main summary as fallback for Test Case {test_case_id}")
-
-                individual_report = f"""=== PYTHON CODE REVIEW REPORT ===
-Test Case: {script_info['test_case_name']}
-Script: {script_info['script_name']}
+            # Generate review for all test cases
+            script_count = len(generated_scripts_info) if generated_scripts_info else 0
+            review_report = f"""=== PYTHON CODE REVIEW REPORT ===
 Review Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
-=== INDIVIDUAL ANALYSIS ===
-{individual_summary_content}
+=== EXECUTIVE SUMMARY ===
+{summary_content}
+
+=== COMPREHENSIVE ANALYSIS ===
+This analysis covers all generated test scripts:"""
+
+            # List all analyzed scripts
+            if generated_scripts_info:
+                for script in generated_scripts_info:
+                    review_report += f"\n• {script['script_name']}: {script['test_case_name']}"
+
+            # Add detailed tool reports
+            for tool, content in detailed_reports.items():
+                review_report += f"""
+
+=== {tool} ANALYSIS ===
+{content}
+"""
+
+            review_report += f"""
 
 === ACTIONS REQUIRED ===
-• Review the analysis above for this specific test case
-• Check "Open Report" for comprehensive HTML results
-• Proceed to execution if no critical issues found
+• Review the detailed analysis above
+• Click "Open Report" for HTML formatted results with better organization
+• Click "Download Report" to save the complete analysis
 
-Status: Individual review completed for {script_info['test_case_name']}."""
+Status: Code review completed successfully for all {script_count} test case(s)."""
 
-                individual_reports.append({
-                    'test_case_id': test_case_id,
-                    'script_name': script_info['script_name'],
-                    'test_case_name': script_info['test_case_name'],
-                    'review_report': individual_report
-                })
+        # Step 6: Complete (100%)
+        update_progress('review', 100, 'Completed', 'Code review completed successfully!', True)
 
-            # Step 6: Complete (100%)
-            update_progress('review', 100, 'Completed', 'Code review completed successfully!', True)
-
-            return jsonify({
-                'success': True,
-                'individual_reports': individual_reports,
-                'main_summary': main_summary_content,
-                'total_scripts': len(individual_reports),
-                'message': f'Python code review completed successfully for all {len(individual_reports)} test case(s)'
-            })
+        return jsonify({
+            'success': True,
+            'review_report': review_report,
+            'message': 'Python code review completed successfully'
+        })
 
     except subprocess.TimeoutExpired:
         update_progress('review', 0, 'Error', 'Code review timed out after 5 minutes', True)
