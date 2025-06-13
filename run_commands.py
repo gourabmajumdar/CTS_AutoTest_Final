@@ -63,7 +63,7 @@ def create_reports_folder():
         print("Reports folder already exists.")
 
 
-def write_summary(results, analyzed_files):
+'''def write_summary(results, analyzed_files):
     """Writes a summary of linter results to summary.txt"""
     with open("reports/summary.txt", "w", encoding="utf8") as f:
         f.write("CODE REVIEW SUMMARY\n")
@@ -81,7 +81,32 @@ def write_summary(results, analyzed_files):
             if 'issues_count' in data:
                 f.write(f"  Issues Found: {data['issues_count']}\n")
             f.write("\n")
+'''
 
+def write_summary(results, analyzed_files):
+    """Simple version - adds icons to existing summary format with special pylint handling"""
+    with open("reports/summary.txt", "w", encoding="utf8") as f:
+        f.write("CODE REVIEW SUMMARY\n")
+        f.write("=" * 20 + "\n")
+        f.write(f"Generated at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+        f.write(f"Files analyzed: {len(analyzed_files)}\n")
+        for file in analyzed_files:
+            f.write(f"  - {file}\n")
+        f.write("\n")
+
+        for tool, data in results.items():
+            # Special logic for pylint - use red cross for issues, amber for others
+            if data['success']:
+                icon = "✅"
+            elif 'pylint' in tool.lower():
+                icon = "❌"  # Red cross for pylint issues
+            else:
+                icon = "⚠️"  # Amber warning for other tools
+
+            f.write(f"{tool.upper()}: {icon}\n")
+            f.write(f"  Return Code: {data['returncode']}\n")
+            f.write(f"  Status: {'Success' if data['success'] else 'Issues Found'}\n")
+            f.write("\n")
 
 # Main execution
 create_reports_folder()
@@ -109,7 +134,7 @@ results = {}
 # Runs black on all files
 black_options = config["linting"]["black"]
 black_result = run_command_to_file(f"black {target_files} {black_options}", "reports/black_output.txt")
-results['black'] = {
+results['black - Code Formatting'] = {
     'returncode': black_result.returncode,
     'success': black_result.returncode == 0
 }
@@ -117,7 +142,7 @@ results['black'] = {
 # Runs flake8 on all files
 flake8_options = config["linting"]["flake8"]
 flake8_result = run_command_to_file(f"flake8 {file_pattern} {flake8_options}", "reports/flake8_output.txt")
-results['flake8'] = {
+results['flake8 - Style & Lint Checks'] = {
     'returncode': flake8_result.returncode,
     'success': flake8_result.returncode == 0
 }
@@ -125,7 +150,7 @@ results['flake8'] = {
 # Runs bandit on all files
 bandit_options = config["security"]["bandit"]
 bandit_result = run_command_to_file(f"bandit {file_pattern} {bandit_options}", "reports/bandit_output.txt")
-results['bandit'] = {
+results['bandit - Security Analysis'] = {
     'returncode': bandit_result.returncode,
     'success': bandit_result.returncode == 0
 }
@@ -133,7 +158,7 @@ results['bandit'] = {
 # Runs pylint on all files
 pylint_options = config["linting"]["pylint"]
 pylint_result = run_command_to_file(f"pylint {file_pattern} {pylint_options}", "reports/pylint_output.txt")
-results['pylint'] = {
+results['pylint - Static Code Analysis'] = {
     'returncode': pylint_result.returncode,
     'success': pylint_result.returncode == 0
 }

@@ -1,0 +1,443 @@
+import subprocess
+import yaml
+import glob
+import os
+from datetime import datetime
+
+# Load configuration from YAML
+with open("config.yaml", "r", encoding="utf8") as file:
+    config = yaml.safe_load(file)
+
+
+def get_all_script_files():
+    """Gets all Python files in the scripts directory."""
+    files = glob.glob("generated-scripts/*.py")
+    if not files:
+        print("No Python files found in generated-scripts directory.")
+        return []
+
+    print(f"Found {len(files)} script files:")
+    for file in files:
+        print(f"  - {file}")
+    return files
+
+
+def get_latest_file():
+    """Finds the latest file in the scripts directory for backward compatibility."""
+    files = glob.glob("generated-scripts/*.py")
+    if not files:
+        print("No Python files found in generated-scripts directory.")
+        return None
+    latest_file = max(files, key=lambda x: os.path.getctime(x))
+    print(f"Latest file: {latest_file}")
+    updated_file_path = latest_file.replace("\\", "/")
+    return updated_file_path
+
+
+def run_command(command):
+    """Executes a shell command and prints output."""
+    result = subprocess.run(command, shell=True, capture_output=True, text=True, encoding="utf-8")
+    print(result.stdout)
+    if result.stderr:
+        pass
+    return result
+
+
+def run_command_to_file(command, output_file):
+    """Executes a command and writes output to file."""
+    result = subprocess.run(command, shell=True, capture_output=True, text=True, encoding="utf-8")
+    with open(output_file, "w", encoding="utf8") as file:
+        file.write(result.stdout)
+        if result.stderr:
+            file.write(f"{result.stderr}\n")
+    return result
+
+
+def create_reports_folder():
+    """Creates the reports folder if it does not exist."""
+    if not os.path.exists("reports"):
+        os.makedirs("reports")
+        print("Created reports folder.")
+    else:
+        print("Reports folder already exists.")
+
+
+def write_summary(results, analyzed_files):
+    """Simple version - adds icons to existing summary format with special pylint handling"""
+    with open("reports/summary.txt", "w", encoding="utf8") as f:
+        f.write("CODE REVIEW SUMMARY\n")
+        f.write("=" * 20 + "\n")
+        f.write(f"Generated at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+        f.write(f"Files analyzed: {len(analyzed_files)}\n")
+        for file in analyzed_files:
+            f.write(f"  - {file}\n")
+        f.write("\n")
+
+        for tool, data in results.items():
+            # Special logic for pylint - use red cross for issues, amber for others
+            if data['success']:
+                icon = "✅"
+            elif 'pylint' in tool.lower():
+                icon = "❌"  # Red cross for pylint issues
+            else:
+                icon = "⚠️"  # Amber warning for other tools
+
+            f.write(f"{tool.upper()}: {icon}\n")
+            f.write(f"  Return Code: {data['returncode']}\n")
+            f.write(f"  Status: {'Success' if data['success'] else 'Issues Found'}\n")
+            f.write("\n")
+
+
+# NEW INDIVIDUAL ANALYSIS FUNCTIONS
+def run_tool_on_single_file(tool_name, script_path, output_dir):
+    """Run a single tool on a single file and return results"""
+
+    # Ensure output directory exists
+    os.makedirs(output_dir, exist_ok=True)
+
+    script_name = os.path.basename(script_path).replace('.py', '')
+
+    # Get options from config
+    if tool_name == 'black':
+        options = config["linting"]["black"]
+        cmd = f'black {script_path} {options}'
+        output_file = os.path.join(output_dir, f"{script_name}_black_output.txt")
+
+    elif tool_name == 'flake8':
+        options = config["linting"]["flake8"]
+        cmd = f'flake8 {script_path} {options}'
+        output_file = os.path.join(output_dir, f"{script_name}_flake8_output.txt")
+
+    elif tool_name == 'pylint':
+        options = config["linting"]["pylint"]
+        cmd = f'pylint {script_path} {options}'
+        output_file = os.path.join(output_dir, f"{script_name}_pylint_output.txt")
+
+    elif tool_name == 'bandit':
+        options = config["security"]["bandit"]
+        cmd = f'bandit {script_path} {options}'
+        # For individual files, we'll keep bandit as HTML
+        if '-f html' not in options:
+            options += ' -f html'
+        cmd = f'bandit {script_path} {options}'
+        output_file = os.path.join(output_dir, f"{script_name}_bandit_output.html")
+
+    else:
+        raise ValueError(f"Unknown tool: {tool_name}")
+
+    try:
+        # Run the command
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True, encoding="utf-8", timeout=60)
+
+        # Write output to file
+        with open(output_file, 'w', encoding='utf-8') as f:
+            f.write(result.stdout)
+            if result.stderr:
+                f.write(f"\n--- STDERR ---\n{result.stderr}")
+
+        return {
+            'tool': tool_name,
+            'script': script_path,
+            'returncode': result.returncode,
+            'success': result.returncode == 0,
+            'output_file': output_file,
+            'stdout': result.stdout,
+            'stderr': result.stderr
+        }
+
+    except subprocess.TimeoutExpired:
+        return {
+            'tool': tool_name,
+            'script': script_path,
+            'returncode': -1,
+            'success': False,
+            'output_file': output_file,
+            'error': 'Timeout'
+        }
+    except Exception as e:
+        return {
+            'tool': tool_name,
+            'script': script_path,
+            'returncode': -1,
+            'success': False,
+            'output_file': output_file,
+            'error': str(e)
+        }
+
+
+def analyze_single_script(script_path, base_output_dir="reports"):
+    """Analyze a single script with all tools and generate individual summary"""
+
+    script_name = os.path.basename(script_path).replace('.py', '')
+    script_output_dir = os.path.join(base_output_dir, f"{script_name}_analysis")
+
+    # Create directory for this script's analysis
+    os.makedirs(script_output_dir, exist_ok=True)
+
+    tools = ['black', 'flake8', 'pylint', 'bandit']
+    results = {}
+
+    print(f"Analyzing {script_name}...")
+
+    # Run each tool individually on this script
+    for tool in tools:
+        print(f"  Running {tool}...")
+        result = run_tool_on_single_file(tool, script_path, script_output_dir)
+        results[tool] = result
+
+    # Generate individual summary for this script
+    summary_file = os.path.join(script_output_dir, f"{script_name}_summary.txt")
+    write_individual_summary(results, script_path, summary_file)
+
+    return {
+        'script_name': script_name,
+        'script_path': script_path,
+        'results': results,
+        'summary_file': summary_file,
+        'output_dir': script_output_dir
+    }
+
+
+def write_individual_summary(results, script_path, summary_file):
+    """Write summary for a single script analysis"""
+
+    script_name = os.path.basename(script_path)
+
+    with open(summary_file, "w", encoding="utf8") as f:
+        f.write("INDIVIDUAL SCRIPT ANALYSIS SUMMARY\n")
+        f.write("=" * 40 + "\n")
+        f.write(f"Generated at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+        f.write(f"Script analyzed: {script_name}\n")
+        f.write(f"Full path: {script_path}\n")
+        f.write("\n")
+
+        # Calculate overall status for this script
+        failed_tools = sum(1 for result in results.values() if not result['success'])
+        if failed_tools == 0:
+            overall_status = "✅ ALL CHECKS PASSED"
+        else:
+            overall_status = f"⚠️ {failed_tools} TOOL(S) FOUND ISSUES"
+
+        f.write(f"OVERALL STATUS: {overall_status}\n")
+        f.write("-" * 40 + "\n\n")
+
+        # Tool-specific results
+        tool_display_names = {
+            'black': 'BLACK - CODE FORMATTING',
+            'flake8': 'FLAKE8 - STYLE & LINT CHECKS',
+            'bandit': 'BANDIT - SECURITY ANALYSIS',
+            'pylint': 'PYLINT - STATIC CODE ANALYSIS'
+        }
+
+        for tool, result in results.items():
+            display_name = tool_display_names.get(tool, tool.upper())
+
+            # Determine icon
+            if result['success']:
+                icon = "✅"
+            elif tool == 'pylint':
+                icon = "❌"  # Red cross for pylint issues
+            else:
+                icon = "⚠️"  # Amber warning for other tools
+
+            f.write(f"{display_name}: {icon}\n")
+            f.write(f"  Return Code: {result['returncode']}\n")
+            f.write(f"  Status: {'Success' if result['success'] else 'Issues Found'}\n")
+            if not result['success'] and 'error' in result:
+                f.write(f"  Error: {result['error']}\n")
+            f.write("\n")
+
+
+def analyze_all_generated_scripts_individually(scripts_dir="generated-scripts", base_output_dir="reports"):
+    """Analyze all scripts individually and create combined overview"""
+
+    # Get all Python scripts
+    script_files = []
+    if os.path.exists(scripts_dir):
+        for file in os.listdir(scripts_dir):
+            if file.endswith('.py'):
+                script_files.append(os.path.join(scripts_dir, file))
+
+    if not script_files:
+        print("No Python scripts found to analyze.")
+        return []
+
+    print(f"Found {len(script_files)} scripts to analyze individually...")
+
+    # Analyze each script individually
+    all_analyses = []
+    for script_path in script_files:
+        analysis = analyze_single_script(script_path, base_output_dir)
+        all_analyses.append(analysis)
+
+    # Create combined overview summary
+    create_combined_overview(all_analyses, base_output_dir)
+
+    return all_analyses
+
+
+def create_combined_overview(all_analyses, base_output_dir):
+    """Create a combined overview of all script analyses"""
+
+    overview_file = os.path.join(base_output_dir, "combined_overview.txt")
+
+    with open(overview_file, "w", encoding="utf8") as f:
+        f.write("COMBINED CODE REVIEW OVERVIEW\n")
+        f.write("=" * 50 + "\n")
+        f.write(f"Generated at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+        f.write(f"Total scripts analyzed: {len(all_analyses)}\n\n")
+
+        # Summary statistics
+        total_issues = 0
+        scripts_with_issues = 0
+        tool_issue_counts = {'black': 0, 'flake8': 0, 'pylint': 0, 'bandit': 0}
+
+        for analysis in all_analyses:
+            script_has_issues = False
+            for tool, result in analysis['results'].items():
+                if not result['success']:
+                    tool_issue_counts[tool] += 1
+                    script_has_issues = True
+                    total_issues += 1
+
+            if script_has_issues:
+                scripts_with_issues += 1
+
+        f.write("OVERVIEW STATISTICS:\n")
+        f.write("-" * 30 + "\n")
+        f.write(f"Scripts with issues: {scripts_with_issues}/{len(all_analyses)}\n")
+        f.write(f"Total tool failures: {total_issues}\n")
+        f.write("\nTool-specific failure counts:\n")
+        for tool, count in tool_issue_counts.items():
+            icon = "❌" if tool == 'pylint' and count > 0 else "⚠️" if count > 0 else "✅"
+            f.write(f"  {tool.upper()}: {count} failures {icon}\n")
+        f.write("\n")
+
+        # Individual script status
+        f.write("INDIVIDUAL SCRIPT STATUS:\n")
+        f.write("-" * 40 + "\n")
+
+        for analysis in all_analyses:
+            script_name = analysis['script_name']
+            failed_tools = sum(1 for result in analysis['results'].values() if not result['success'])
+
+            if failed_tools == 0:
+                status_icon = "✅"
+                status_text = "PASSED"
+            else:
+                status_icon = "⚠️"
+                status_text = f"{failed_tools} ISSUES"
+
+            f.write(f"{status_icon} {script_name}: {status_text}\n")
+
+            # Show which tools failed for this script
+            for tool, result in analysis['results'].items():
+                if not result['success']:
+                    tool_icon = "❌" if tool == 'pylint' else "⚠️"
+                    f.write(f"    {tool_icon} {tool.upper()}: Issues found\n")
+            f.write("\n")
+
+    print(f"Combined overview created: {overview_file}")
+
+
+def run_individual_analysis():
+    """NEW: Run individual analysis on all scripts"""
+    print("Starting INDIVIDUAL script code review analysis...")
+
+    create_reports_folder()
+
+    # Analyze all scripts individually
+    analyses = analyze_all_generated_scripts_individually()
+
+    if not analyses:
+        print("No analyses completed.")
+        return []
+
+    print(f"\nIndividual analysis complete! {len(analyses)} scripts analyzed individually.")
+    print("Check the 'reports' folder for:")
+    print("- Individual analysis folders for each script")
+    print("- combined_overview.txt for overall summary")
+
+    return analyses
+
+
+def run_bulk_analysis():
+    """EXISTING: Your original bulk analysis - kept as backup"""
+    print("Starting BULK script code review analysis...")
+
+    create_reports_folder()
+
+    # Get all script files to analyze
+    all_files = get_all_script_files()
+    if not all_files:
+        print("No files to analyze. Exiting.")
+        return []
+
+    # For backward compatibility, if only one file, use the original logic
+    if len(all_files) == 1:
+        target_files = all_files[0]
+        file_pattern = all_files[0]
+    else:
+        # Analyze all files
+        target_files = " ".join(all_files)
+        file_pattern = "generated-scripts/*.py"
+
+    print(f"Analyzing: {target_files}")
+
+    # Dictionary to store all results
+    results = {}
+
+    # Runs black on all files
+    black_options = config["linting"]["black"]
+    black_result = run_command_to_file(f"black {target_files} {black_options}", "reports/black_output.txt")
+    results['black - Code Formatting'] = {
+        'returncode': black_result.returncode,
+        'success': black_result.returncode == 0
+    }
+
+    # Runs flake8 on all files
+    flake8_options = config["linting"]["flake8"]
+    flake8_result = run_command_to_file(f"flake8 {file_pattern} {flake8_options}", "reports/flake8_output.txt")
+    results['flake8 - Style & Lint Checks'] = {
+        'returncode': flake8_result.returncode,
+        'success': flake8_result.returncode == 0
+    }
+
+    # Runs bandit on all files
+    bandit_options = config["security"]["bandit"]
+    bandit_result = run_command_to_file(f"bandit {file_pattern} {bandit_options}", "reports/bandit_output.html")
+    results['bandit - Security Analysis'] = {
+        'returncode': bandit_result.returncode,
+        'success': bandit_result.returncode == 0
+    }
+
+    # Runs pylint on all files
+    pylint_options = config["linting"]["pylint"]
+    pylint_result = run_command_to_file(f"pylint {file_pattern} {pylint_options}", "reports/pylint_output.txt")
+    results['pylint - Static Code Analysis'] = {
+        'returncode': pylint_result.returncode,
+        'success': pylint_result.returncode == 0
+    }
+
+    # Write the summary file
+    write_summary(results, all_files)
+
+    print("Bulk code analysis completed successfully!")
+    print(f"Reports generated in 'reports/' directory")
+    print(f"Summary available in 'reports/summary.txt'")
+
+    return results
+
+
+# MAIN EXECUTION LOGIC
+if __name__ == "__main__":
+    print("Choose analysis mode:")
+    print("1. Individual Analysis (recommended) - Each script analyzed separately")
+    print("2. Bulk Analysis (old method) - All scripts analyzed together")
+
+    choice = input("Enter choice (1 or 2, default=1): ").strip()
+
+    if choice == "2":
+        run_bulk_analysis()
+    else:
+        run_individual_analysis()

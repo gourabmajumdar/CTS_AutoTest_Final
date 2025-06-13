@@ -1,6 +1,6 @@
 // ================================================================================================
-// COGNIZANT AUTO TEST DASHBOARD - COMPLETE JAVASCRIPT WITH REAL PROGRESS TRACKING
-// Multi-Test Case Support with Dynamic UI Generation + New Workflow + Real Progress
+// COGNIZANT AUTO TEST DASHBOARD - COMPLETE JAVASCRIPT
+// Multi-Test Case Support with Dynamic UI Generation
 // ================================================================================================
 
 // Global Variables
@@ -9,10 +9,6 @@ let currentOperation = null;
 let ingestedTestCases = [];
 let generatedScripts = [];
 let executionResults = [];
-
-// Progress tracking variables
-let progressPollingInterval = null;
-let currentTaskType = null;
 
 // DOM Elements Cache
 const elements = {
@@ -174,7 +170,7 @@ function showHome() {
     const welcomeMessage = document.getElementById('welcomeMessage');
     const autoTestContent = document.getElementById('autoTestContent');
 
-    if (dashboardTitle) dashboardTitle.textContent = '';
+    if (dashboardTitle) dashboardTitle.textContent = 'Home';
 
     if (welcomeMessage) {
         welcomeMessage.classList.remove('hide');
@@ -220,69 +216,6 @@ function showAutoTest() {
 
     console.log('✅ AutoTest page displayed');
 }
-
-// ================================================================================================
-// REAL PROGRESS TRACKING FUNCTIONS
-// ================================================================================================
-
-function startRealProgress(taskType, title, initialSteps = []) {
-    console.log(`🚀 Starting real progress tracking for: ${taskType}`);
-
-    currentTaskType = taskType;
-
-    // Show progress container
-    showProgress(title, initialSteps);
-
-    // Reset progress
-    updateProgress(0, 'Initializing...', 0);
-
-    // Start polling for real progress
-    progressPollingInterval = setInterval(() => {
-        pollProgress(taskType);
-    }, 500); // Poll every 500ms for smooth updates
-}
-
-async function pollProgress(taskType) {
-    try {
-        const response = await fetch(`/progress/${taskType}`);
-        const progressData = await response.json();
-
-        // Update UI with real progress
-        updateProgress(
-            progressData.progress,
-            progressData.step,
-            Math.floor(progressData.progress / 20) // Convert to step index
-        );
-
-        // Check if task is completed
-        if (progressData.completed) {
-            console.log(`✅ Task ${taskType} completed with progress: ${progressData.progress}%`);
-            stopProgressPolling();
-
-            // Small delay to show 100% before hiding
-            setTimeout(() => {
-                hideProgress();
-            }, 1000);
-        }
-
-    } catch (error) {
-        console.error(`❌ Error polling progress for ${taskType}:`, error);
-        // Don't stop polling on error - backend might be processing
-    }
-}
-
-function stopProgressPolling() {
-    if (progressPollingInterval) {
-        clearInterval(progressPollingInterval);
-        progressPollingInterval = null;
-        currentTaskType = null;
-    }
-}
-
-// Cleanup on page unload
-window.addEventListener('beforeunload', () => {
-    stopProgressPolling();
-});
 
 // ================================================================================================
 // UTILITY FUNCTIONS
@@ -559,592 +492,11 @@ function resetButtonStates() {
     if (reportButtons) reportButtons.classList.remove('show');
 }
 
-// ================================================================================================
-// TEXT AREA MANAGEMENT
-// ================================================================================================
-
-function handleTextAreaInput() {
-    updateCharCount();
-    autoResizeTextarea();
-}
-
-function updateCharCount() {
-    if (!elements.textArea || !elements.charCount) return;
-
-    const count = elements.textArea.value.length;
-    elements.charCount.textContent = `${count} character${count !== 1 ? 's' : ''}`;
-}
-
-function autoResizeTextarea() {
-    if (!elements.textArea) return;
-
-    elements.textArea.style.height = 'auto';
-    elements.textArea.style.height = Math.max(180, elements.textArea.scrollHeight) + 'px';
-}
-
-function updateTestAreaCharCount(index) {
-    const textarea = document.getElementById(`testArea${index}`);
-    const charCount = document.getElementById(`charCount${index}`);
-
-    if (textarea && charCount) {
-        const count = textarea.value.length;
-        charCount.textContent = `${count} character${count !== 1 ? 's' : ''}`;
-    }
-}
-
-function autoResizeTestTextarea(index) {
-    const textarea = document.getElementById(`testArea${index}`);
-    if (textarea) {
-        textarea.style.height = 'auto';
-        textarea.style.height = Math.max(250, textarea.scrollHeight) + 'px';
-    }
-}
-
-// ================================================================================================
-// MULTI-TEST AREA MANAGEMENT
-// ================================================================================================
-function createMultiTestAreas() {
-    // Only create multi-test areas if there are multiple scripts
-    if (!generatedScripts || generatedScripts.length <= 1) {
-        console.log('🏗️ Single or no test case - skipping multi-test areas');
-        return;
-    }
-
-    console.log('🏗️ Creating multi-test areas for', generatedScripts.length, 'scripts');
-
-    // FIXED: Target the AutoTest content area specifically, not the main dashboard container
-    const autoTestContent = document.getElementById('autoTestContent');
-
-    if (!autoTestContent) {
-        console.error('❌ AutoTest content area not found!');
-        return;
-    }
-
-    // Remove existing multi-test areas
-    const existingMultiAreas = document.getElementById('multiTestAreas');
-    if (existingMultiAreas) {
-        existingMultiAreas.remove();
-    }
-
-    // Create new multi-test areas container
-    const multiTestAreas = document.createElement('div');
-    multiTestAreas.id = 'multiTestAreas';
-    multiTestAreas.className = 'multi-test-areas';
-    multiTestAreas.style.marginBottom = '25px';
-
-    // Create test areas for each generated script
-    generatedScripts.forEach((script, index) => {
-        const testAreaGroup = document.createElement('div');
-        testAreaGroup.className = 'test-area-group';
-        testAreaGroup.style.cssText = `
-            margin-bottom: 30px;
-            border: 2px solid #e5e7eb;
-            border-radius: 15px;
-            overflow: hidden;
-            background: rgba(255, 255, 255, 0.9);
-        `;
-
-        testAreaGroup.innerHTML = `
-            <div class="test-area-header" style="
-                background: linear-gradient(135deg, #1e40af, #3b82f6);
-                color: white;
-                padding: 15px 20px;
-                font-weight: 600;
-                font-size: 1.1rem;
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-            ">
-                <span>Test Case ${script.id}: ${script.test_case_name}</span>
-                <div style="
-                    background: rgba(255, 255, 255, 0.2);
-                    border-radius: 50%;
-                    width: 30px;
-                    height: 30px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-weight: bold;
-                ">${script.id}</div>
-            </div>
-            <div class="test-area-content" style="position: relative;">
-                <textarea 
-                    class="test-area-textarea" 
-                    id="testArea${index}"
-                    placeholder="Content for ${script.test_case_name} will appear here..."
-                    oninput="updateTestAreaCharCount(${index}); autoResizeTestTextarea(${index})"
-                    style="
-                        width: 100%;
-                        min-height: 250px;
-                        padding: 20px;
-                        border: none;
-                        font-family: 'Courier New', monospace;
-                        font-size: 0.9rem;
-                        resize: vertical;
-                        background: white;
-                        color: #374151;
-                        border-radius: 0 0 13px 13px;
-                    "
-                ></textarea>
-                <div class="test-area-char-count" id="charCount${index}" style="
-                    position: absolute;
-                    bottom: 12px;
-                    right: 18px;
-                    color: #6b7280;
-                    font-size: 0.8rem;
-                    background: rgba(255, 255, 255, 0.95);
-                    padding: 4px 8px;
-                    border-radius: 6px;
-                    border: 1px solid #e5e7eb;
-                ">0 characters</div>
-                <div class="test-area-actions" style="
-                    position: absolute;
-                    top: 12px;
-                    right: 18px;
-                    display: flex;
-                    gap: 8px;
-                    z-index: 10;
-                ">
-                    <button class="action-btn save-btn" onclick="saveTestCode(${index})" title="Save code" style="
-                        width: 36px;
-                        height: 36px;
-                        border: none;
-                        border-radius: 8px;
-                        cursor: pointer;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        font-size: 16px;
-                        background: #22c55e;
-                        color: white;
-                        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
-                        transition: all 0.3s ease;
-                    ">
-                        💾
-                    </button>
-                    <button class="action-btn download-btn" onclick="downloadTestCode(${index})" title="Download code" style="
-                        width: 36px;
-                        height: 36px;
-                        border: none;
-                        border-radius: 8px;
-                        cursor: pointer;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        font-size: 16px;
-                        background: #3b82f6;
-                        color: white;
-                        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
-                        transition: all 0.3s ease;
-                    ">
-                        📥
-                    </button>
-                </div>
-            </div>
-        `;
-        multiTestAreas.appendChild(testAreaGroup);
-    });
-
-    // FIXED: Insert into AutoTest content area instead of main dashboard container
-    autoTestContent.appendChild(multiTestAreas);
-
-    // Hide single text area only when showing multi-test areas
-    const singleTextAreaContainer = document.querySelector('.text-area-container');
-    if (singleTextAreaContainer) {
-        singleTextAreaContainer.style.display = 'none';
-    }
-
-    console.log('✅ Multi-test areas created successfully');
-}
-
-function hideMultiTestAreas() {
-    console.log('🗑️ Hiding multi-test areas');
-
-    const multiTestAreas = document.getElementById('multiTestAreas');
-    if (multiTestAreas) {
-        multiTestAreas.remove();
-    }
-
-    // Show single text area
-    const singleTextAreaContainer = document.querySelector('.text-area-container');
-    if (singleTextAreaContainer) {
-        singleTextAreaContainer.style.display = 'block';
-    }
-}
-
-// ================================================================================================
-// MAIN FUNCTIONALITY - INGEST TEST
-// ================================================================================================
-
-async function ingestTest() {
-    console.log('📥 Starting test ingestion...');
-
-    if (uploadedFiles.length === 0) {
-        showToast('Please upload files first!', 'warning');
-        return;
-    }
-
-    const ingestBtn = document.getElementById('ingestBtn');
-    if (!ingestBtn) return;
-
-    ingestBtn.disabled = true;
-    ingestBtn.textContent = 'Ingesting...';
-
-    try {
-        showProgress('Ingesting Test Data', [
-            'Reading uploaded files',
-            'Parsing file contents',
-            'Extracting test requirements',
-            'Generating test metadata'
-        ]);
-
-        updateProgress(25, 'Reading uploaded files', 0);
-        await delay(500);
-
-        updateProgress(50, 'Parsing file contents', 1);
-        await delay(700);
-
-        updateProgress(75, 'Extracting test requirements', 2);
-
-        const response = await fetch('/ingest', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ files: uploadedFiles })
-        });
-
-        const result = await response.json();
-        console.log('📊 Ingestion result:', result);
-
-        updateProgress(100, 'Test data ingested successfully', 3);
-
-        if (result.success) {
-            // Store ingested test cases
-            ingestedTestCases = result.processed_files;
-
-            if (elements.textArea) {
-                elements.textArea.value = `Test ingestion completed!\n\nFiles processed: ${uploadedFiles.length}\nTest cases found: ${result.total_test_cases}\n\n${result.processed_files.map(f => `- ${f.name}: ${f.test_cases}`).join('\n')}\n\nReady for Python test code generation.`;
-                updateCharCount();
-                autoResizeTextarea();
-            }
-
-            // Enable Generate Code button
-            const generateBtn = document.getElementById('generateBtn');
-            if (generateBtn) {
-                generateBtn.disabled = false;
-                generateBtn.style.opacity = '1';
-                generateBtn.style.cursor = 'pointer';
-            }
-
-            showToast(result.message, 'success');
-        } else {
-            showToast(result.message, 'error');
-        }
-
-    } catch (error) {
-        console.error('❌ Ingestion error:', error);
-        showToast('Ingestion failed: ' + error.message, 'error');
-    } finally {
-        ingestBtn.disabled = false;
-        ingestBtn.textContent = 'Ingest Test';
-        hideProgress();
-    }
-}
-
-// ================================================================================================
-// MAIN FUNCTIONALITY - GENERATE CODE (WITH REAL PROGRESS)
-// ================================================================================================
-
-async function generateCode() {
-    console.log('🔧 Starting code generation...');
-
-    const generateBtn = document.getElementById('generateBtn');
-    if (!generateBtn) return;
-
-    generateBtn.disabled = true;
-    generateBtn.classList.add('btn-loading');
-
-    try {
-        // Start real progress tracking
-        startRealProgress('generate', 'Generating Python Test Code', [
-            'Analyzing test requirements',
-            'Creating Python test structure',
-            'Generating Python Code',
-            'Optimizing Python code',
-            'Finalizing test suite'
-        ]);
-
-        // Make the actual API call
-        const response = await fetch('/generate', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ input_text: elements.textArea ? elements.textArea.value : '' })
-        });
-
-        const result = await response.json();
-        console.log('🐍 Generation result:', result);
-
-        if (result.success) {
-            // Store generated scripts
-            generatedScripts = result.generated_scripts;
-
-            // Create multi test areas OR show single area
-            if (generatedScripts.length > 1) {
-                createMultiTestAreas();
-            } else {
-                const singleTextAreaContainer = document.querySelector('.text-area-container');
-                if (singleTextAreaContainer) {
-                    singleTextAreaContainer.style.display = 'block';
-                }
-            }
-
-            // Populate text areas
-            generatedScripts.forEach((script, index) => {
-                const textarea = document.getElementById(`testArea${index}`);
-                if (textarea) {
-                    textarea.value = script.code;
-                    updateTestAreaCharCount(index);
-                    autoResizeTestTextarea(index);
-                }
-            });
-
-            // For single test case, update main text area
-            if (generatedScripts.length === 1 && elements.textArea) {
-                elements.textArea.value = generatedScripts[0].code;
-                updateCharCount();
-                autoResizeTextarea();
-                if (elements.codeActions) elements.codeActions.classList.add('show');
-            }
-
-            // Update button states - NEW WORKFLOW: Review before Execute
-            const reviewBtn = document.getElementById('reviewBtn');
-            const executeBtn = document.getElementById('executeBtn');
-            const ingestBtn = document.getElementById('ingestBtn');
-
-            generateBtn.disabled = true;
-            generateBtn.classList.remove('btn-loading');
-            generateBtn.textContent = 'Code Generated ✓';
-            generateBtn.style.opacity = '0.6';
-            generateBtn.style.cursor = 'not-allowed';
-
-            // CHANGED: Enable review button instead of execute
-            if (reviewBtn) {
-                reviewBtn.disabled = false;
-                reviewBtn.style.opacity = '1';
-                reviewBtn.style.cursor = 'pointer';
-            }
-
-            // CHANGED: Keep execute button disabled until review is complete
-            if (executeBtn) {
-                executeBtn.disabled = true;
-                executeBtn.style.opacity = '0.6';
-                executeBtn.style.cursor = 'not-allowed';
-            }
-
-            if (ingestBtn) {
-                ingestBtn.disabled = true;
-                ingestBtn.style.opacity = '0.6';
-            }
-
-            showToast(`Generated ${generatedScripts.length} Python test scripts successfully! Review code before execution.`, 'success');
-        } else {
-            // Stop progress polling on failure
-            stopProgressPolling();
-            hideProgress();
-
-            // Reset button on failure
-            generateBtn.disabled = false;
-            generateBtn.classList.remove('btn-loading');
-            generateBtn.textContent = 'Generate Code';
-            generateBtn.style.opacity = '1';
-            generateBtn.style.cursor = 'pointer';
-            showToast(result.message, 'error');
-        }
-
-    } catch (error) {
-        console.error('❌ Generation error:', error);
-
-        // Stop progress polling on error
-        stopProgressPolling();
-        hideProgress();
-
-        // Reset button on error
-        generateBtn.disabled = false;
-        generateBtn.classList.remove('btn-loading');
-        generateBtn.textContent = 'Generate Code';
-        generateBtn.style.opacity = '1';
-        generateBtn.style.cursor = 'pointer';
-        showToast('Code generation failed: ' + error.message, 'error');
-    }
-}
-
-// ================================================================================================
-// MAIN FUNCTIONALITY - REVIEW CODE (WITH REAL PROGRESS)
-// ================================================================================================
-
-async function reviewCode() {
-    console.log('🔍 Starting code review...');
-
-    // CHANGED: Check for generated scripts instead of execution results
-    if (generatedScripts.length === 0) {
-        showToast('No generated scripts to review. Please generate Python code first!', 'warning');
-        return;
-    }
-
-    const reviewBtn = document.getElementById('reviewBtn');
-    if (!reviewBtn) return;
-
-    reviewBtn.disabled = true;
-    reviewBtn.classList.add('btn-loading');
-
-    try {
-        // Start real progress tracking
-        startRealProgress('review', 'Reviewing Python Code Quality', [
-            'Scanning Python code structure',
-            'Analyzing syntax and PEP 8 compliance',
-            'Checking Python best practices',
-            'Running security analysis',
-            'Generating Python recommendations',
-            'Compiling final review report'
-        ]);
-
-        const response = await fetch('/review', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({})
-        });
-
-        const result = await response.json();
-        console.log('📋 Review result:', result);
-
-        if (result.success) {
-            // Update text areas with review reports
-            generatedScripts.forEach((script, index) => {
-                const textarea = document.getElementById(`testArea${index}`);
-                if (textarea) {
-                    const individualReview = `=== CODE REVIEW REPORT ===
-Test Case: ${script.test_case_name}
-Script: ${script.script_name}
-
-${result.review_report}
-
-=== INDIVIDUAL ANALYSIS ===
-This review covers the specific test case: ${script.test_case_name}
-
-████████████████████████████████████████████████████████████████████████████████████████████████████████████████
-██ ⚠️  IMPORTANT: Code review completed successfully. Check Errors/Issues before Execution. ⚠️  ██
-██ 🚀 Click "Execute Code" to run the reviewed test scripts if there are no Static Code Analysis Issue. 🚀 ██
-████████████████████████████████████████████████████████████████████████████████████████████████████████████████`;
-
-                    textarea.value = individualReview;
-                    updateTestAreaCharCount(index);
-                    autoResizeTestTextarea(index);
-                }
-            });
-
-            // Single test case handling
-            if (generatedScripts.length === 1 && elements.textArea) {
-                const singleScript = generatedScripts[0];
-                const singleReview = `=== CODE REVIEW REPORT ===
-Test Case: ${singleScript.test_case_name}
-Script: ${singleScript.script_name}
-
-${result.review_report}
-
-████████████████████████████████████████████████████████████████████████████████████████████████████████████████
-██ 🚀 Click "Execute Code" to run the reviewed test script.if there are no Static Code Analysis Issue. 🚀 ██
-████████████████████████████████████████████████████████████████████████████████████████████████████████████████`;
-
-                elements.textArea.value = singleReview;
-                updateCharCount();
-                autoResizeTextarea();
-            }
-
-            // Update button states
-            const generateBtn = document.getElementById('generateBtn');
-            const executeBtn = document.getElementById('executeBtn');
-            const ingestBtn = document.getElementById('ingestBtn');
-            const reportButtons = document.getElementById('reportButtons');
-
-            if (generateBtn) {
-                generateBtn.disabled = true;
-                generateBtn.style.opacity = '0.6';
-            }
-
-            if (ingestBtn) {
-                ingestBtn.disabled = true;
-                ingestBtn.style.opacity = '0.6';
-            }
-
-            reviewBtn.disabled = true;
-            reviewBtn.classList.remove('btn-loading');
-            reviewBtn.textContent = 'Review Completed ✓';
-            reviewBtn.style.opacity = '0.6';
-            reviewBtn.style.cursor = 'not-allowed';
-
-            // CHANGED: Enable execute button after successful review
-            if (executeBtn) {
-                executeBtn.disabled = false;
-                executeBtn.style.opacity = '1';
-                executeBtn.style.cursor = 'pointer';
-            }
-
-            if (reportButtons) reportButtons.classList.add('show');
-
-            showToast(`Reviewed ${generatedScripts.length} Python test scripts successfully! Ready for execution.`, 'success');
-        } else {
-            // Stop progress polling on failure
-            stopProgressPolling();
-            hideProgress();
-
-            // Reset button on failure
-            reviewBtn.disabled = false;
-            reviewBtn.classList.remove('btn-loading');
-            reviewBtn.textContent = 'Review Code';
-            reviewBtn.style.opacity = '1';
-            reviewBtn.style.cursor = 'pointer';
-            showToast(result.message, 'error');
-        }
-
-    } catch (error) {
-        console.error('❌ Review error:', error);
-
-        // Stop progress polling on error
-        stopProgressPolling();
-        hideProgress();
-
-        // Reset button on error
-        reviewBtn.disabled = false;
-        reviewBtn.classList.remove('btn-loading');
-        reviewBtn.textContent = 'Review Code';
-        reviewBtn.style.opacity = '1';
-        reviewBtn.style.cursor = 'pointer';
-        showToast('Code review failed: ' + error.message, 'error');
-    }
-}
-
-// ================================================================================================
-// MAIN FUNCTIONALITY - EXECUTE CODE (WITH REAL PROGRESS)
-// ================================================================================================
-
 async function executeCode() {
     console.log('⚡ Starting code execution...');
 
-    // CHANGED: Check for reviewed scripts
     if (generatedScripts.length === 0) {
-        showToast('Please generate and review Python test code first!', 'warning');
-        return;
-    }
-
-    // CHANGED: Add additional check to ensure review is completed
-    const reviewBtn = document.getElementById('reviewBtn');
-    if (reviewBtn && !reviewBtn.disabled && reviewBtn.textContent !== 'Review Completed ✓') {
-        showToast('Please complete code review before execution!', 'warning');
+        showToast('Please generate Python test code first!', 'warning');
         return;
     }
 
@@ -1155,14 +507,21 @@ async function executeCode() {
     executeBtn.classList.add('btn-loading');
 
     try {
-        // Start real progress tracking
-        startRealProgress('execute', 'Executing Reviewed Python Test Code', [
+        const steps = [
             'Preparing Python execution environment',
             'Connecting to test infrastructure',
-            'Running reviewed Python test cases',
+            'Running Python test cases',
             'Collecting test results',
             'Generating execution output'
-        ]);
+        ];
+
+        showProgress('Executing Python Test Code', steps);
+
+        for (let i = 0; i < steps.length; i++) {
+            const progress = ((i + 1) / steps.length) * 100;
+            updateProgress(progress, steps[i], i);
+            await delay(200 + Math.random() * 150);
+        }
 
         const response = await fetch('/execute', {
             method: 'POST',
@@ -1179,7 +538,7 @@ async function executeCode() {
             // Store execution results
             executionResults = result.execution_results;
 
-            // Update text areas with execution results
+            // Update each text area with execution results
             executionResults.forEach((execResult, index) => {
                 const textarea = document.getElementById(`testArea${index}`);
                 if (textarea) {
@@ -1189,15 +548,13 @@ Script: ${execResult.script_name}
 Connected Host: ${result.connected_host}
 Execution Status: ${execResult.success ? 'SUCCESS' : 'FAILED'}
 
-=== EXECUTION OUTPUT ===
-STDOUT:
+=== STDOUT ===
 ${execResult.stdout}
 
-STDERR:
+=== STDERR ===
 ${execResult.stderr}
 
-=== EXECUTION COMPLETED ===
-Test: ${execResult.test_case_name} Execution Done ✓`;
+=== EXECUTION COMPLETED ===`;
 
                     textarea.value = executionOutput;
                     updateTestAreaCharCount(index);
@@ -1205,31 +562,7 @@ Test: ${execResult.test_case_name} Execution Done ✓`;
                 }
             });
 
-            // Single test case handling
-            if (executionResults.length === 1 && elements.textArea) {
-                const singleResult = executionResults[0];
-                const singleExecution = `=== EXECUTION RESULTS ===
-Test Case: ${singleResult.test_case_name}
-Script: ${singleResult.script_name}
-Connected Host: ${result.connected_host}
-Execution Status: ${singleResult.success ? 'SUCCESS' : 'FAILED'}
-
-=== EXECUTION OUTPUT ===
-STDOUT:
-${singleResult.stdout}
-
-STDERR:
-${singleResult.stderr}
-
-=== EXECUTION COMPLETED ===
-✅ Test Case Execution Completed`;
-
-                elements.textArea.value = singleExecution;
-                updateCharCount();
-                autoResizeTextarea();
-            }
-
-            // Final button states
+            // Update button states
             const generateBtn = document.getElementById('generateBtn');
             const reviewBtn = document.getElementById('reviewBtn');
 
@@ -1245,17 +578,14 @@ ${singleResult.stderr}
             }
 
             if (reviewBtn) {
-                reviewBtn.disabled = true;
-                reviewBtn.style.opacity = '0.6';
+                reviewBtn.disabled = false;
+                reviewBtn.style.opacity = '1';
+                reviewBtn.style.cursor = 'pointer';
             }
 
-            showToast(`Executed ${executionResults.length} reviewed Python test scripts successfully!`, 'success');
+            showToast(`Executed ${executionResults.length} Python test scripts successfully!`, 'success');
         } else {
             console.error('❌ Execute failed:', result.message);
-
-            // Stop progress polling on failure
-            stopProgressPolling();
-            hideProgress();
 
             // Reset button on failure
             executeBtn.disabled = false;
@@ -1269,10 +599,6 @@ ${singleResult.stderr}
     } catch (error) {
         console.error('❌ Execution error:', error);
 
-        // Stop progress polling on error
-        stopProgressPolling();
-        hideProgress();
-
         // Reset button on error
         executeBtn.disabled = false;
         executeBtn.classList.remove('btn-loading');
@@ -1280,6 +606,129 @@ ${singleResult.stderr}
         executeBtn.style.opacity = '1';
         executeBtn.style.cursor = 'pointer';
         showToast('Code execution failed: ' + error.message, 'error');
+    } finally {
+        hideProgress();
+    }
+}
+// ================================================================================================
+// MAIN FUNCTIONALITY - REVIEW CODE
+// ================================================================================================
+
+async function reviewCode() {
+    console.log('🔍 Starting code review...');
+
+    if (executionResults.length === 0) {
+        showToast('No execution results to review. Please execute Python code first!', 'warning');
+        return;
+    }
+
+    const reviewBtn = document.getElementById('reviewBtn');
+    if (!reviewBtn) return;
+
+    reviewBtn.disabled = true;
+    reviewBtn.classList.add('btn-loading');
+
+    try {
+        const steps = [
+            'Scanning Python code structure',
+            'Analyzing syntax and PEP 8 compliance',
+            'Checking Python best practices',
+            'Running security analysis',
+            'Generating Python recommendations',
+            'Compiling final review report'
+        ];
+
+        showProgress('Reviewing Python Code Quality', steps);
+
+        for (let i = 0; i < steps.length; i++) {
+            const progress = ((i + 1) / steps.length) * 100;
+            updateProgress(progress, steps[i], i);
+            await delay(350 + Math.random() * 200);
+        }
+
+        const response = await fetch('/review', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({})
+        });
+
+        const result = await response.json();
+        console.log('📋 Review result:', result);
+
+        if (result.success) {
+            // Update all text areas with the review report
+            generatedScripts.forEach((script, index) => {
+                const textarea = document.getElementById(`testArea${index}`);
+                if (textarea) {
+                    const individualReview = `=== CODE REVIEW REPORT ===
+Test Case: ${script.test_case_name}
+Script: ${script.script_name}
+
+${result.review_report}
+
+=== INDIVIDUAL ANALYSIS ===
+This review covers the specific test case: ${script.test_case_name}
+
+Click "Open Report" or "Download Report" for comprehensive analysis results.`;
+
+                    textarea.value = individualReview;
+                    updateTestAreaCharCount(index);
+                    autoResizeTestTextarea(index);
+                }
+            });
+
+            // Final button state management
+            const generateBtn = document.getElementById('generateBtn');
+            const executeBtn = document.getElementById('executeBtn');
+            const ingestBtn = document.getElementById('ingestBtn');
+            const reportButtons = document.getElementById('reportButtons');
+
+            if (generateBtn) {
+                generateBtn.disabled = true;
+                generateBtn.style.opacity = '0.6';
+            }
+            if (executeBtn) {
+                executeBtn.disabled = true;
+                executeBtn.style.opacity = '0.6';
+            }
+            if (ingestBtn) {
+                ingestBtn.disabled = true;
+                ingestBtn.style.opacity = '0.6';
+            }
+
+            reviewBtn.disabled = true;
+            reviewBtn.classList.remove('btn-loading');
+            reviewBtn.textContent = 'Review Completed ✓';
+            reviewBtn.style.opacity = '0.6';
+            reviewBtn.style.cursor = 'not-allowed';
+
+            if (reportButtons) reportButtons.classList.add('show');
+
+            showToast(`Reviewed ${generatedScripts.length} Python test scripts successfully!`, 'success');
+        } else {
+            // Reset button on failure
+            reviewBtn.disabled = false;
+            reviewBtn.classList.remove('btn-loading');
+            reviewBtn.textContent = 'Review Code';
+            reviewBtn.style.opacity = '1';
+            reviewBtn.style.cursor = 'pointer';
+            showToast(result.message, 'error');
+        }
+
+    } catch (error) {
+        console.error('❌ Review error:', error);
+
+        // Reset button on error
+        reviewBtn.disabled = false;
+        reviewBtn.classList.remove('btn-loading');
+        reviewBtn.textContent = 'Review Code';
+        reviewBtn.style.opacity = '1';
+        reviewBtn.style.cursor = 'pointer';
+        showToast('Code review failed: ' + error.message, 'error');
+    } finally {
+        hideProgress();
     }
 }
 
@@ -1337,45 +786,17 @@ function downloadTestCode(index) {
         showToast('No code to download!', 'warning');
         return;
     }
-    //debug code - gourabm
-    const codeMarker = '# Generated Python Test Code';
-    const resultMarker = '=== EXECUTION RESULTS ===';
-    const reviewMarker = "=== CODE REVIEW REPORT ==="
-
-    let fileType = 'text/plain';
-    let fileExtension = '.txt';
-    let fileNamePrefix = "";
-    let contentToDownload = code;
-
-    if (code.includes(codeMarker)) {
-        const codeStartIndex = code.indexOf(codeMarker);
-        contentToDownload = code.substring(codeStartIndex);
-        fileType = 'text/x-python';
-        fileExtension = '.py';
-        fileNamePrefix = 'generated-test-code';
-    } else if (code.includes(resultMarker)) {
-        fileNamePrefix = 'execution-results';
-        const resultStartIndex = code.indexOf(resultMarker);
-        contentToDownload = code.substring(resultStartIndex);
-    } else if (code.includes(reviewMarker)) {
-        fileNamePrefix = 'review-results';
-        const resultStartIndex = code.indexOf(reviewMarker);
-        contentToDownload = code.substring(resultStartIndex);
-    } else {
-        showToast('No recognizable content to download!', 'warning');
-        return;
-    }
 
     const script = generatedScripts[index];
     const element = document.createElement('a');
-    const file = new Blob([contentToDownload], { type: fileType });
+    const file = new Blob([code], { type: 'text/x-python' });
     element.href = URL.createObjectURL(file);
-    element.download = `${fileNamePrefix}-${new Date().toISOString().slice(0,10)}${fileExtension}`;
+    element.download = `${script.script_name || `test_case_${script.id}`}.py`;
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);
 
-    showToast(`${fileNamePrefix} ${script.id} downloaded successfully!`, 'success');
+    showToast(`Test Case ${script.id} downloaded successfully!`, 'success');
 }
 
 // ================================================================================================
@@ -1426,48 +847,30 @@ function downloadCode() {
 
     const fullText = elements.textArea.value.trim();
 
+    console.log(fullText)
+
     if (!fullText) {
         showToast('No code to download!', 'warning');
         return;
     }
 
     const codeMarker = '# Generated Python Test Code';
-    const resultMarker = '=== EXECUTION RESULTS ===';
-    const reviewMarker = '=== CODE REVIEW REPORT ===';
+    let codeToDownload = fullText;
+    const codeStartIndex = fullText.indexOf(codeMarker);
 
-    let fileType = 'text/plain';
-    let fileExtension = '.txt';
-    let fileNamePrefix = '';
-    let contentToDownload = fullText;
-
-    if (fullText.includes(codeMarker)) {
-        const codeStartIndex = fullText.indexOf(codeMarker);
-        contentToDownload = fullText.substring(codeStartIndex);
-        fileType = 'text/x-python';
-        fileExtension = '.py';
-        fileNamePrefix = 'generated-test-code';
-    } else if (fullText.includes(resultMarker)) {
-        fileNamePrefix = 'execution-results';
-        const resultStartIndex = fullText.indexOf(resultMarker);
-        contentToDownload = fullText.substring(resultStartIndex);
-    } else if (fullText.includes(reviewMarker)) {
-        fileNamePrefix = 'review-results';
-        const resultStartIndex = fullText.indexOf(reviewMarker);
-        contentToDownload = fullText.substring(resultStartIndex);
-    } else {
-        showToast('No recognizable content to download!', 'warning');
-        return;
+    if (codeStartIndex !== -1) {
+        codeToDownload = fullText.substring(codeStartIndex);
     }
 
     const element = document.createElement('a');
-    const file = new Blob([contentToDownload], { type: fileType });
+    const file = new Blob([codeToDownload], { type: 'text/x-python' });
     element.href = URL.createObjectURL(file);
-    element.download = `${fileNamePrefix}-${new Date().toISOString().slice(0,10)}${fileExtension}`;
+    element.download = `generated-test-suite-${new Date().toISOString().slice(0,10)}.py`;
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);
 
-    showToast(`${fileExtension} file downloaded successfully!`, 'success');
+    showToast('Python test code downloaded successfully!', 'success');
 }
 
 // ================================================================================================
@@ -1620,14 +1023,12 @@ window.hideToast = hideToast;
 // INITIALIZATION COMPLETE
 // ================================================================================================
 
-console.log('🎉 Cognizant AutoTest Dashboard - Complete JavaScript with Real Progress Loaded Successfully!');
+console.log('🎉 Cognizant AutoTest Dashboard - Complete JavaScript Loaded Successfully!');
 console.log('📱 Multi-test case support enabled');
 console.log('🔧 All functions exported globally');
 console.log('⚡ Performance monitoring active');
 console.log('♿ Accessibility features enabled');
 console.log('🛡️ Error handling configured');
-console.log('📊 Real progress tracking implemented');
-console.log('🔄 New workflow: Upload → Ingest → Generate → Review → Execute');
 
 // ================================================================================================
 // DEVELOPMENT HELPERS (Remove in production)
@@ -1643,9 +1044,7 @@ if (window.location.hostname === 'localhost' || window.location.hostname === '12
         ingestedTestCases,
         generatedScripts,
         executionResults,
-        elements,
-        progressPollingInterval,
-        currentTaskType
+        elements
     };
 
     // Log performance metrics
@@ -1662,3 +1061,1092 @@ if (window.location.hostname === 'localhost' || window.location.hostname === '12
 // ================================================================================================
 // END OF FILE
 // ================================================================================================
+
+// ================================================================================================
+// TEXT AREA MANAGEMENT
+// ================================================================================================
+
+function handleTextAreaInput() {
+    updateCharCount();
+    autoResizeTextarea();
+}
+
+function updateCharCount() {
+    if (!elements.textArea || !elements.charCount) return;
+
+    const count = elements.textArea.value.length;
+    elements.charCount.textContent = `${count} character${count !== 1 ? 's' : ''}`;
+}
+
+function autoResizeTextarea() {
+    if (!elements.textArea) return;
+
+    elements.textArea.style.height = 'auto';
+    elements.textArea.style.height = Math.max(180, elements.textArea.scrollHeight) + 'px';
+}
+
+function updateTestAreaCharCount(index) {
+    const textarea = document.getElementById(`testArea${index}`);
+    const charCount = document.getElementById(`charCount${index}`);
+
+    if (textarea && charCount) {
+        const count = textarea.value.length;
+        charCount.textContent = `${count} character${count !== 1 ? 's' : ''}`;
+    }
+}
+
+function autoResizeTestTextarea(index) {
+    const textarea = document.getElementById(`testArea${index}`);
+    if (textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = Math.max(250, textarea.scrollHeight) + 'px';
+    }
+}
+
+// ================================================================================================
+// MULTI-TEST AREA MANAGEMENT
+// ================================================================================================
+
+function createMultiTestAreas() {
+    // Only create multi-test areas if there are multiple scripts
+    if (!generatedScripts || generatedScripts.length <= 1) {
+        console.log('🏗️ Single or no test case - skipping multi-test areas');
+        return;
+    }
+
+    console.log('🏗️ Creating multi-test areas for', generatedScripts.length, 'scripts');
+
+    const container = document.querySelector('.dashboard-container');
+
+    // Remove existing multi-test areas
+    const existingMultiAreas = document.getElementById('multiTestAreas');
+    if (existingMultiAreas) {
+        existingMultiAreas.remove();
+    }
+
+    // Create new multi-test areas container
+    const multiTestAreas = document.createElement('div');
+    multiTestAreas.id = 'multiTestAreas';
+    multiTestAreas.className = 'multi-test-areas';
+    multiTestAreas.style.marginBottom = '25px';
+
+    // Create test areas for each generated script
+    generatedScripts.forEach((script, index) => {
+        const testAreaGroup = document.createElement('div');
+        testAreaGroup.className = 'test-area-group';
+        testAreaGroup.style.cssText = `
+            margin-bottom: 30px;
+            border: 2px solid #e5e7eb;
+            border-radius: 15px;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.9);
+        `;
+
+        testAreaGroup.innerHTML = `
+            <div class="test-area-header" style="
+                background: linear-gradient(135deg, #1e40af, #3b82f6);
+                color: white;
+                padding: 15px 20px;
+                font-weight: 600;
+                font-size: 1.1rem;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            ">
+                <span>Test Case ${script.id}: ${script.test_case_name}</span>
+                <div style="
+                    background: rgba(255, 255, 255, 0.2);
+                    border-radius: 50%;
+                    width: 30px;
+                    height: 30px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-weight: bold;
+                ">${script.id}</div>
+            </div>
+            <div class="test-area-content" style="position: relative;">
+                <textarea 
+                    class="test-area-textarea" 
+                    id="testArea${index}"
+                    placeholder="Content for ${script.test_case_name} will appear here..."
+                    oninput="updateTestAreaCharCount(${index}); autoResizeTestTextarea(${index})"
+                    style="
+                        width: 100%;
+                        min-height: 250px;
+                        padding: 20px;
+                        border: none;
+                        font-family: 'Courier New', monospace;
+                        font-size: 0.9rem;
+                        resize: vertical;
+                        background: white;
+                        color: #374151;
+                        border-radius: 0 0 13px 13px;
+                    "
+                ></textarea>
+                <div class="test-area-char-count" id="charCount${index}" style="
+                    position: absolute;
+                    bottom: 12px;
+                    right: 18px;
+                    color: #6b7280;
+                    font-size: 0.8rem;
+                    background: rgba(255, 255, 255, 0.95);
+                    padding: 4px 8px;
+                    border-radius: 6px;
+                    border: 1px solid #e5e7eb;
+                ">0 characters</div>
+                <div class="test-area-actions" style="
+                    position: absolute;
+                    top: 12px;
+                    right: 18px;
+                    display: flex;
+                    gap: 8px;
+                    z-index: 10;
+                ">
+                    <button class="action-btn save-btn" onclick="saveTestCode(${index})" title="Save code" style="
+                        width: 36px;
+                        height: 36px;
+                        border: none;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 16px;
+                        background: #22c55e;
+                        color: white;
+                        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+                        transition: all 0.3s ease;
+                    ">
+                        💾
+                    </button>
+                    <button class="action-btn download-btn" onclick="downloadTestCode(${index})" title="Download code" style="
+                        width: 36px;
+                        height: 36px;
+                        border: none;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 16px;
+                        background: #3b82f6;
+                        color: white;
+                        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+                        transition: all 0.3s ease;
+                    ">
+                        📥
+                    </button>
+                </div>
+            </div>
+        `;
+        multiTestAreas.appendChild(testAreaGroup);
+    });
+
+    // Insert safely without causing DOM errors
+    if (container) {
+        container.appendChild(multiTestAreas);
+    }
+
+    // Hide single text area only when showing multi-test areas
+    const singleTextAreaContainer = document.querySelector('.text-area-container');
+    if (singleTextAreaContainer) {
+        singleTextAreaContainer.style.display = 'none';
+    }
+
+    console.log('✅ Multi-test areas created successfully');
+}
+
+function hideMultiTestAreas() {
+    console.log('🗑️ Hiding multi-test areas');
+
+    const multiTestAreas = document.getElementById('multiTestAreas');
+    if (multiTestAreas) {
+        multiTestAreas.remove();
+    }
+
+    // Show single text area
+    const singleTextAreaContainer = document.querySelector('.text-area-container');
+    if (singleTextAreaContainer) {
+        singleTextAreaContainer.style.display = 'block';
+    }
+}
+
+// ================================================================================================
+// MAIN FUNCTIONALITY - INGEST TEST
+// ================================================================================================
+
+async function ingestTest() {
+    console.log('📥 Starting test ingestion...');
+
+    if (uploadedFiles.length === 0) {
+        showToast('Please upload files first!', 'warning');
+        return;
+    }
+
+    const ingestBtn = document.getElementById('ingestBtn');
+    if (!ingestBtn) return;
+
+    ingestBtn.disabled = true;
+    ingestBtn.textContent = 'Ingesting...';
+
+    try {
+        showProgress('Ingesting Test Data', [
+            'Reading uploaded files',
+            'Parsing file contents',
+            'Extracting test requirements',
+            'Generating test metadata'
+        ]);
+
+        updateProgress(25, 'Reading uploaded files', 0);
+        await delay(500);
+
+        updateProgress(50, 'Parsing file contents', 1);
+        await delay(700);
+
+        updateProgress(75, 'Extracting test requirements', 2);
+
+        const response = await fetch('/ingest', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ files: uploadedFiles })
+        });
+
+        const result = await response.json();
+        console.log('📊 Ingestion result:', result);
+
+        updateProgress(100, 'Test data ingested successfully', 3);
+
+        if (result.success) {
+            // Store ingested test cases
+            ingestedTestCases = result.processed_files;
+
+            if (elements.textArea) {
+                elements.textArea.value = `Test ingestion completed!\n\nFiles processed: ${uploadedFiles.length}\nTest cases found: ${result.total_test_cases}\n\n${result.processed_files.map(f => `- ${f.name}: ${f.test_cases}`).join('\n')}\n\nReady for Python test code generation.`;
+                updateCharCount();
+                autoResizeTextarea();
+            }
+
+            // Enable Generate Code button
+            const generateBtn = document.getElementById('generateBtn');
+            if (generateBtn) {
+                generateBtn.disabled = false;
+                generateBtn.style.opacity = '1';
+                generateBtn.style.cursor = 'pointer';
+            }
+
+            showToast(result.message, 'success');
+        } else {
+            showToast(result.message, 'error');
+        }
+
+    } catch (error) {
+        console.error('❌ Ingestion error:', error);
+        showToast('Ingestion failed: ' + error.message, 'error');
+    } finally {
+        ingestBtn.disabled = false;
+        ingestBtn.textContent = 'Ingest Test';
+        hideProgress();
+    }
+}
+
+// ================================================================================================
+// FIXED MAIN FUNCTIONALITY - GENERATE CODE
+// ================================================================================================
+
+async function generateCode() {
+    console.log('🔧 Starting code generation...');
+
+    const generateBtn = document.getElementById('generateBtn');
+    if (!generateBtn) return;
+
+    generateBtn.disabled = true;
+    generateBtn.classList.add('btn-loading');
+
+    try {
+        const steps = [
+            'Analyzing test requirements',
+            'Creating Python test structure',
+            'Generating unittest test cases',
+            'Optimizing Python code',
+            'Finalizing test suite'
+        ];
+
+        showProgress('Generating Python Test Code', steps);
+
+        for (let i = 0; i < steps.length; i++) {
+            const progress = ((i + 1) / steps.length) * 100;
+            updateProgress(progress, steps[i], i);
+            await delay(300 + Math.random() * 200);
+        }
+
+        const response = await fetch('/generate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ input_text: elements.textArea ? elements.textArea.value : '' })
+        });
+
+        const result = await response.json();
+        console.log('🐍 Generation result:', result);
+
+        if (result.success) {
+            // Store generated scripts
+            generatedScripts = result.generated_scripts;
+
+            // Create multi test areas OR show single area
+            if (generatedScripts.length > 1) {
+                createMultiTestAreas();
+            } else {
+                // Show single text area for single test case
+                const singleTextAreaContainer = document.querySelector('.text-area-container');
+                if (singleTextAreaContainer) {
+                    singleTextAreaContainer.style.display = 'block';
+                }
+            }
+
+            // Populate each text area with its corresponding code
+            generatedScripts.forEach((script, index) => {
+                const textarea = document.getElementById(`testArea${index}`);
+                if (textarea) {
+                    textarea.value = script.code;
+                    updateTestAreaCharCount(index);
+                    autoResizeTestTextarea(index);
+                }
+            });
+
+            // CHANGED: For single test case, update main text area
+            if (generatedScripts.length === 1 && elements.textArea) {
+                elements.textArea.value = generatedScripts[0].code;
+                updateCharCount();
+                autoResizeTextarea();
+                if (elements.codeActions) elements.codeActions.classList.add('show');
+            }
+
+            // UPDATED BUTTON STATES - REVIEW COMES BEFORE EXECUTE
+            const reviewBtn = document.getElementById('reviewBtn');  // CHANGED: Enable review instead of execute
+            const executeBtn = document.getElementById('executeBtn'); // CHANGED: Keep execute disabled
+            const ingestBtn = document.getElementById('ingestBtn');
+
+            generateBtn.disabled = true;
+            generateBtn.classList.remove('btn-loading');
+            generateBtn.textContent = 'Code Generated ✓';
+            generateBtn.style.opacity = '0.6';
+            generateBtn.style.cursor = 'not-allowed';
+
+            // CHANGED: Enable review button instead of execute
+            if (reviewBtn) {
+                reviewBtn.disabled = false;
+                reviewBtn.style.opacity = '1';
+                reviewBtn.style.cursor = 'pointer';
+            }
+
+            // CHANGED: Keep execute button disabled until review is complete
+            if (executeBtn) {
+                executeBtn.disabled = true;
+                executeBtn.style.opacity = '0.6';
+                executeBtn.style.cursor = 'not-allowed';
+            }
+
+            if (ingestBtn) {
+                ingestBtn.disabled = true;
+                ingestBtn.style.opacity = '0.6';
+            }
+
+            showToast(`Generated ${generatedScripts.length} Python test scripts successfully! Review code before execution.`, 'success');
+        } else {
+            // Reset button on failure
+            generateBtn.disabled = false;
+            generateBtn.classList.remove('btn-loading');
+            generateBtn.textContent = 'Generate Code';
+            generateBtn.style.opacity = '1';
+            generateBtn.style.cursor = 'pointer';
+            showToast(result.message, 'error');
+        }
+
+    } catch (error) {
+        console.error('❌ Generation error:', error);
+
+        // Reset button on error
+        generateBtn.disabled = false;
+        generateBtn.classList.remove('btn-loading');
+        generateBtn.textContent = 'Generate Code';
+        generateBtn.style.opacity = '1';
+        generateBtn.style.cursor = 'pointer';
+        showToast('Code generation failed: ' + error.message, 'error');
+    } finally {
+        hideProgress();
+    }
+}
+
+// ================================================================================================
+// FIXED MAIN FUNCTIONALITY - REVIEW CODE
+// ================================================================================================
+
+async function reviewCode() {
+    console.log('🔍 Starting code review...');
+
+    // CHANGED: Check for generated scripts instead of execution results
+    if (generatedScripts.length === 0) {
+        showToast('No generated scripts to review. Please generate Python code first!', 'warning');
+        return;
+    }
+
+    const reviewBtn = document.getElementById('reviewBtn');
+    if (!reviewBtn) return;
+
+    reviewBtn.disabled = true;
+    reviewBtn.classList.add('btn-loading');
+
+    try {
+        const steps = [
+            'Scanning Python code structure',
+            'Analyzing syntax and PEP 8 compliance',
+            'Checking Python best practices',
+            'Running security analysis',
+            'Generating Python recommendations',
+            'Compiling final review report'
+        ];
+
+        showProgress('Reviewing Python Code Quality', steps);
+
+        for (let i = 0; i < steps.length; i++) {
+            const progress = ((i + 1) / steps.length) * 100;
+            updateProgress(progress, steps[i], i);
+            await delay(350 + Math.random() * 200);
+        }
+
+        const response = await fetch('/review', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({})
+        });
+
+        const result = await response.json();
+        console.log('📋 Review result:', result);
+
+        if (result.success) {
+            // Update all text areas with the review report
+            generatedScripts.forEach((script, index) => {
+                const textarea = document.getElementById(`testArea${index}`);
+                if (textarea) {
+                    const individualReview = `=== CODE REVIEW REPORT ===
+Test Case: ${script.test_case_name}
+Script: ${script.script_name}
+
+${result.review_report}
+
+=== INDIVIDUAL ANALYSIS ===
+This review covers the specific test case: ${script.test_case_name}
+
+Code review completed successfully. Ready for execution.
+
+Click "Execute Code" to run the reviewed test scripts.`;
+
+                    textarea.value = individualReview;
+                    updateTestAreaCharCount(index);
+                    autoResizeTestTextarea(index);
+                }
+            });
+
+            // ADDED: Single test case - update main text area
+            if (generatedScripts.length === 1 && elements.textArea) {
+                const singleScript = generatedScripts[0];
+                const singleReview = `=== CODE REVIEW REPORT ===
+Test Case: ${singleScript.test_case_name}
+Script: ${singleScript.script_name}
+
+${result.review_report}
+
+=== CODE REVIEW COMPLETED ===
+✅ Code review passed successfully!
+✅ Ready for execution on remote device
+✅ All quality checks completed
+
+Click "Execute Code" to run the reviewed test script.`;
+
+                elements.textArea.value = singleReview;
+                updateCharCount();
+                autoResizeTextarea();
+            }
+
+            // UPDATED BUTTON STATE MANAGEMENT
+            const generateBtn = document.getElementById('generateBtn');
+            const executeBtn = document.getElementById('executeBtn'); // CHANGED: Enable execute after review
+            const ingestBtn = document.getElementById('ingestBtn');
+            const reportButtons = document.getElementById('reportButtons');
+
+            if (generateBtn) {
+                generateBtn.disabled = true;
+                generateBtn.style.opacity = '0.6';
+            }
+
+            if (ingestBtn) {
+                ingestBtn.disabled = true;
+                ingestBtn.style.opacity = '0.6';
+            }
+
+            reviewBtn.disabled = true;
+            reviewBtn.classList.remove('btn-loading');
+            reviewBtn.textContent = 'Review Completed ✓';
+            reviewBtn.style.opacity = '0.6';
+            reviewBtn.style.cursor = 'not-allowed';
+
+            // CHANGED: Enable execute button after successful review
+            if (executeBtn) {
+                executeBtn.disabled = false;
+                executeBtn.style.opacity = '1';
+                executeBtn.style.cursor = 'pointer';
+            }
+
+            if (reportButtons) reportButtons.classList.add('show');
+
+            showToast(`Reviewed ${generatedScripts.length} Python test scripts successfully! Ready for execution.`, 'success');
+        } else {
+            // Reset button on failure
+            reviewBtn.disabled = false;
+            reviewBtn.classList.remove('btn-loading');
+            reviewBtn.textContent = 'Review Code';
+            reviewBtn.style.opacity = '1';
+            reviewBtn.style.cursor = 'pointer';
+            showToast(result.message, 'error');
+        }
+
+    } catch (error) {
+        console.error('❌ Review error:', error);
+
+        // Reset button on error
+        reviewBtn.disabled = false;
+        reviewBtn.classList.remove('btn-loading');
+        reviewBtn.textContent = 'Review Code';
+        reviewBtn.style.opacity = '1';
+        reviewBtn.style.cursor = 'pointer';
+        showToast('Code review failed: ' + error.message, 'error');
+    } finally {
+        hideProgress();
+    }
+}
+
+// ================================================================================================
+// FIXED MAIN FUNCTIONALITY - EXECUTE CODE
+// ================================================================================================
+
+async function executeCode() {
+    console.log('⚡ Starting code execution...');
+
+    // CHANGED: Check for reviewed scripts instead of just generated scripts
+    if (generatedScripts.length === 0) {
+        showToast('Please generate and review Python test code first!', 'warning');
+        return;
+    }
+
+    // CHANGED: Add additional check to ensure review is completed
+    const reviewBtn = document.getElementById('reviewBtn');
+    if (reviewBtn && !reviewBtn.disabled && reviewBtn.textContent !== 'Review Completed ✓') {
+        showToast('Please complete code review before execution!', 'warning');
+        return;
+    }
+
+    const executeBtn = document.getElementById('executeBtn');
+    if (!executeBtn) return;
+
+    executeBtn.disabled = true;
+    executeBtn.classList.add('btn-loading');
+
+    try {
+        const steps = [
+            'Preparing Python execution environment',
+            'Connecting to test infrastructure',
+            'Running reviewed Python test cases',  // CHANGED: Updated message
+            'Collecting test results',
+            'Generating execution output'
+        ];
+
+        showProgress('Executing Reviewed Python Test Code', steps);  // CHANGED: Updated title
+
+        for (let i = 0; i < steps.length; i++) {
+            const progress = ((i + 1) / steps.length) * 100;
+            updateProgress(progress, steps[i], i);
+            await delay(200 + Math.random() * 150);
+        }
+
+        const response = await fetch('/execute', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({})
+        });
+
+        const result = await response.json();
+        console.log('🚀 Execution result:', result);
+
+        if (result.success) {
+            // Store execution results
+            executionResults = result.execution_results;
+
+            // Update each text area with execution results
+            executionResults.forEach((execResult, index) => {
+                const textarea = document.getElementById(`testArea${index}`);
+                if (textarea) {
+                    const executionOutput = `=== EXECUTION RESULTS ===
+Test Case: ${execResult.test_case_name}
+Script: ${execResult.script_name}
+Connected Host: ${result.connected_host}
+Execution Status: ${execResult.success ? 'SUCCESS' : 'FAILED'}
+
+=== CODE REVIEW COMPLETED ===
+✅ Code review passed - Scripts were reviewed before execution
+
+=== EXECUTION OUTPUT ===
+STDOUT:
+${execResult.stdout}
+
+STDERR:
+${execResult.stderr}
+
+=== EXECUTION COMPLETED ===
+All Test Executions Completed ✓`;
+
+                    textarea.value = executionOutput;
+                    updateTestAreaCharCount(index);
+                    autoResizeTestTextarea(index);
+                }
+            });
+
+            // ADDED: Single test case - update main text area
+            if (executionResults.length === 1 && elements.textArea) {
+                const singleResult = executionResults[0];
+                const singleExecution = `=== EXECUTION RESULTS ===
+Test Case: ${singleResult.test_case_name}
+Script: ${singleResult.script_name}
+Connected Host: ${result.connected_host}
+Execution Status: ${singleResult.success ? 'SUCCESS' : 'FAILED'}
+
+=== EXECUTION OUTPUT ===
+STDOUT:
+${singleResult.stdout}
+
+STDERR:
+${singleResult.stderr}
+
+=== EXECUTION COMPLETED ===
+✅ Test Execution Completed`;
+
+                elements.textArea.value = singleExecution;
+                updateCharCount();
+                autoResizeTextarea();
+            }
+
+            // FINAL BUTTON STATES - All workflow steps completed
+            const generateBtn = document.getElementById('generateBtn');
+            const reviewBtn = document.getElementById('reviewBtn');
+
+            executeBtn.disabled = true;
+            executeBtn.classList.remove('btn-loading');
+            executeBtn.textContent = 'Code Executed ✓';
+            executeBtn.style.opacity = '0.6';
+            executeBtn.style.cursor = 'not-allowed';
+
+            if (generateBtn) {
+                generateBtn.disabled = true;
+                generateBtn.style.opacity = '0.6';
+            }
+
+            if (reviewBtn) {
+                reviewBtn.disabled = true;
+                reviewBtn.style.opacity = '0.6';
+            }
+
+            showToast(`Executed ${executionResults.length} reviewed Python test scripts successfully!`, 'success');
+        } else {
+            console.error('❌ Execute failed:', result.message);
+
+            // Reset button on failure
+            executeBtn.disabled = false;
+            executeBtn.classList.remove('btn-loading');
+            executeBtn.textContent = 'Execute Code';
+            executeBtn.style.opacity = '1';
+            executeBtn.style.cursor = 'pointer';
+            showToast(result.message, 'error');
+        }
+
+    } catch (error) {
+        console.error('❌ Execution error:', error);
+
+        // Reset button on error
+        executeBtn.disabled = false;
+        executeBtn.classList.remove('btn-loading');
+        executeBtn.textContent = 'Execute Code';
+        executeBtn.style.opacity = '1';
+        executeBtn.style.cursor = 'pointer';
+        showToast('Code execution failed: ' + error.message, 'error');
+    } finally {
+        hideProgress();
+    }
+}
+
+// ================================================================================================
+// INDIVIDUAL TEST CASE FUNCTIONS
+// ================================================================================================
+
+function saveTestCode(index) {
+    console.log(`💾 Saving test code for index: ${index}`);
+
+    const textarea = document.getElementById(`testArea${index}`);
+    if (!textarea) return;
+
+    const code = textarea.value.trim();
+    if (!code) {
+        showToast('No code to save!', 'warning');
+        return;
+    }
+
+    const script = generatedScripts[index];
+
+    fetch('/save_code', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            code: code,
+            test_case_id: script.id,
+            test_case_name: script.test_case_name
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(`Test Case ${script.id} saved successfully!`, 'success');
+        } else {
+            showToast(`Save failed: ${data.message}`, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('❌ Error saving code:', error);
+        showToast('Error saving code', 'error');
+    });
+}
+
+function downloadTestCode(index) {
+    console.log(`📥 Downloading test code for index: ${index}`);
+
+    const textarea = document.getElementById(`testArea${index}`);
+    if (!textarea) return;
+
+    const code = textarea.value.trim();
+    if (!code) {
+        showToast('No code to download!', 'warning');
+        return;
+    }
+
+    const script = generatedScripts[index];
+    const element = document.createElement('a');
+    const file = new Blob([code], { type: 'text/x-python' });
+    element.href = URL.createObjectURL(file);
+    element.download = `${script.script_name || `test_case_${script.id}`}.py`;
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+
+    showToast(`Test Case ${script.id} downloaded successfully!`, 'success');
+}
+
+// ================================================================================================
+// ORIGINAL CODE ACTIONS (FALLBACK FOR SINGLE TEXTAREA)
+// ================================================================================================
+
+function saveCode() {
+    console.log('💾 Saving code (single textarea mode)');
+
+    if (!elements.textArea) return;
+
+    const code = elements.textArea.value.trim();
+    if (!code) {
+        showToast('No code to save!', 'warning');
+        return;
+    }
+
+    // Save to localStorage as backup
+    localStorage.setItem('dashboard_code', code);
+    localStorage.setItem('dashboard_code_timestamp', new Date().toISOString());
+
+    fetch('/save_code', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ code: code })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(`${data.message}`, 'success');
+        } else {
+            showToast(`Save failed: ${data.message}`, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('❌ Error saving code:', error);
+        showToast('Error saving code to file', 'error');
+        showToast('Code saved to browser storage only', 'warning');
+    });
+}
+
+/*function downloadCode() {
+    console.log('📥 Downloading code (single textarea mode)');
+
+    if (!elements.textArea) return;
+
+    const fullText = elements.textArea.value.trim();
+    console.log(fullText)
+
+    if (!fullText) {
+        showToast('No code to download!', 'warning');
+        return;
+    }
+
+    const codeMarker = '# Generated Python Test Code';
+    let codeToDownload = fullText;
+    const codeStartIndex = fullText.indexOf(codeMarker);
+
+    if (codeStartIndex !== -1) {
+        codeToDownload = fullText.substring(codeStartIndex);
+    }
+
+    const element = document.createElement('a');
+    const file = new Blob([codeToDownload], { type: 'text/x-python' });
+    element.href = URL.createObjectURL(file);
+    element.download = `generated-test-suite-${new Date().toISOString().slice(0,10)}.py`;
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+
+    showToast('Python test code downloaded successfully!', 'success');
+}*/
+
+function downloadCode() {
+    console.log('📥 Downloading code (single textarea mode)');
+
+    if (!elements.textArea) return;
+
+    const fullText = elements.textArea.value.trim();
+    console.log(fullText);
+
+    if (!fullText) {
+        showToast('No code to download!', 'warning');
+        return;
+    }
+
+    const codeMarker = '# Generated Python Test Code';
+    const resultMarker = '=== EXECUTION RESULTS ===';
+
+    let fileType = 'text/plain';
+    let fileExtension = '.txt';
+    let fileNamePrefix = 'execution-results';
+    let contentToDownload = fullText;
+
+    if (fullText.includes(codeMarker)) {
+        const codeStartIndex = fullText.indexOf(codeMarker);
+        contentToDownload = fullText.substring(codeStartIndex);
+        fileType = 'text/x-python';
+        fileExtension = '.py';
+        fileNamePrefix = 'generated-test-suite';
+    } else if (fullText.includes(resultMarker)) {
+        const resultStartIndex = fullText.indexOf(resultMarker);
+        contentToDownload = fullText.substring(resultStartIndex);
+    } else {
+        showToast('No recognizable content to download!', 'warning');
+        return;
+    }
+
+    const element = document.createElement('a');
+    const file = new Blob([contentToDownload], { type: fileType });
+    element.href = URL.createObjectURL(file);
+    element.download = `${fileNamePrefix}-${new Date().toISOString().slice(0,10)}${fileExtension}`;
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+
+    showToast(`${fileExtension} file downloaded successfully!`, 'success');
+}
+
+// ================================================================================================
+// REPORT FUNCTIONS
+// ================================================================================================
+
+async function openReport() {
+    console.log('📊 Opening report...');
+
+    try {
+        const response = await fetch('/open-report', { method: 'HEAD' });
+        if (!response.ok) {
+            showToast('Report not found on server.', 'error');
+            return;
+        }
+        window.open('/open-report', '_blank');
+        showToast('Report opened in new tab', 'success');
+    } catch (err) {
+        console.error('❌ Failed to open report:', err);
+        showToast('Failed to open report.', 'error');
+    }
+}
+
+async function downloadReport() {
+    console.log('📥 Downloading report...');
+
+    try {
+        const response = await fetch('/download-report', { method: 'HEAD' });
+        if (!response.ok) {
+            showToast('Report not found on server.', 'error');
+            return;
+        }
+        const link = document.createElement('a');
+        link.href = '/download-report';
+        link.download = 'combinedreport.html';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showToast('Report download started.', 'success');
+    } catch (err) {
+        console.error('❌ Failed to download report:', err);
+        showToast('Failed to download report.', 'error');
+    }
+}
+
+// ================================================================================================
+// KEYBOARD SHORTCUTS AND ACCESSIBILITY
+// ================================================================================================
+
+document.addEventListener('keydown', function(e) {
+    // Ctrl/Cmd + S to save code
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        if (generatedScripts.length > 0) {
+            // Save all test codes
+            generatedScripts.forEach((script, index) => {
+                saveTestCode(index);
+            });
+        } else {
+            saveCode();
+        }
+    }
+
+    // Ctrl/Cmd + D to download code
+    if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+        e.preventDefault();
+        if (generatedScripts.length > 0) {
+            // Download all test codes
+            generatedScripts.forEach((script, index) => {
+                downloadTestCode(index);
+            });
+        } else {
+            downloadCode();
+        }
+    }
+
+    // Escape to close toast
+    if (e.key === 'Escape') {
+        hideToast();
+    }
+});
+
+// ================================================================================================
+// ERROR HANDLING AND LOGGING
+// ================================================================================================
+
+window.addEventListener('error', function(event) {
+    console.error('❌ Global error:', event.error);
+    showToast('An unexpected error occurred. Please check the console for details.', 'error');
+});
+
+window.addEventListener('unhandledrejection', function(event) {
+    console.error('❌ Unhandled promise rejection:', event.reason);
+    showToast('An unexpected error occurred. Please check the console for details.', 'error');
+});
+
+// ================================================================================================
+// PERFORMANCE MONITORING
+// ================================================================================================
+
+function measurePerformance(functionName, fn) {
+    return async function(...args) {
+        const startTime = performance.now();
+        try {
+            const result = await fn.apply(this, args);
+            const endTime = performance.now();
+            console.log(`⚡ ${functionName} completed in ${(endTime - startTime).toFixed(2)}ms`);
+            return result;
+        } catch (error) {
+            const endTime = performance.now();
+            console.error(`❌ ${functionName} failed after ${(endTime - startTime).toFixed(2)}ms:`, error);
+            throw error;
+        }
+    };
+}
+
+// ================================================================================================
+// GLOBAL FUNCTION EXPORTS FOR ONCLICK HANDLERS
+// ================================================================================================
+
+// Make sure all functions are globally available for onclick handlers
+window.showHome = showHome;
+window.showAutoTest = showAutoTest;
+window.ingestTest = ingestTest;
+window.generateCode = generateCode;
+window.executeCode = executeCode;
+window.reviewCode = reviewCode;
+window.saveCode = saveCode;
+window.downloadCode = downloadCode;
+window.saveTestCode = saveTestCode;
+window.downloadTestCode = downloadTestCode;
+window.downloadReport = downloadReport;
+window.openReport = openReport;
+window.updateTestAreaCharCount = updateTestAreaCharCount;
+window.autoResizeTestTextarea = autoResizeTestTextarea;
+window.hideToast = hideToast;
+
+// ================================================================================================
+// INITIALIZATION COMPLETE
+// ================================================================================================
+
+console.log('🎉 Cognizant AutoTest Dashboard - Complete JavaScript Loaded Successfully!');
+console.log('📱 Multi-test case support enabled');
+console.log('🔧 All functions exported globally');
+console.log('⚡ Performance monitoring active');
+console.log('♿ Accessibility features enabled');
+console.log('🛡️ Error handling configured');
+
+// ================================================================================================
+// DEVELOPMENT HELPERS (Remove in production)
+// ================================================================================================
+
+if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    // Development mode helpers
+    console.log('🔧 Development mode detected');
+
+    // Add debug info to window object for console access
+    window.debugInfo = {
+        uploadedFiles,
+        ingestedTestCases,
+        generatedScripts,
+        executionResults,
+        elements
+    };
+
+    // Log performance metrics
+    if ('performance' in window) {
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                const navTiming = performance.getEntriesByType('navigation')[0];
+                console.log(`📊 Page load time: ${navTiming.loadEventEnd - navTiming.fetchStart}ms`);
+            }, 0);
+        });
+    }
+}

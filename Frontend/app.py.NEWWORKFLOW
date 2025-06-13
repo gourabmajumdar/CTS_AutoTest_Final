@@ -8,7 +8,6 @@ import subprocess
 import re
 import time
 import glob
-import threading
 from datetime import datetime
 
 # Initialize Flask with explicit static folder configuration
@@ -25,6 +24,11 @@ else:
     app.config['DEBUG'] = True
     app.config['SECRET_KEY'] = 'dev-secret-key'
 
+#app.config['UPLOAD_FOLDER'] = os.path.join(os.getcwd(), 'test_case')
+#app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+#app.config['GENERATED_SCRIPTS_FOLDER'] = os.path.join(os.getcwd(), 'generated-scripts')
+#app.config['REPORT_FOLDER'] = os.path.join(os.getcwd(), 'reports')
+
 app.config['UPLOAD_FOLDER'] = os.path.join(os.getcwd(), '..', 'test_case')
 app.config['GENERATED_SCRIPTS_FOLDER'] = os.path.join(os.getcwd(), '..', 'generated-scripts')
 app.config['REPORT_FOLDER'] = os.path.join(os.getcwd(), '..', 'reports')
@@ -32,8 +36,6 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
 # Ensure upload directory exists
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-
-generation_lock = threading.Lock()
 
 # Updated allowed file extensions
 ALLOWED_EXTENSIONS = {
@@ -43,63 +45,6 @@ ALLOWED_EXTENSIONS = {
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-
-# ================================================================================================
-# PROGRESS TRACKING FUNCTIONS
-# ================================================================================================
-
-def update_progress(task_type, progress, status, step, completed=False):
-    """Update progress file for real-time tracking"""
-    try:
-        progress_data = {
-            'progress': progress,
-            'status': status,
-            'step': step,
-            'completed': completed,
-            'timestamp': time.time()
-        }
-        progress_file = f"progress_{task_type}.json"
-        with open(progress_file, 'w') as f:
-            json.dump(progress_data, f)
-        print(f"[PROGRESS] {task_type}: {progress}% - {step}")
-    except Exception as e:
-        print(f"Error updating progress: {e}")
-
-
-def clear_progress(task_type):
-    """Clear progress file when starting new task"""
-    try:
-        progress_file = f"progress_{task_type}.json"
-        if os.path.exists(progress_file):
-            os.remove(progress_file)
-    except Exception as e:
-        print(f"Error clearing progress: {e}")
-
-
-@app.route('/progress/<task_type>', methods=['GET'])
-def get_progress(task_type):
-    """Get real-time progress for generate/review/execute tasks"""
-    try:
-        progress_file = f"progress_{task_type}.json"
-        if os.path.exists(progress_file):
-            with open(progress_file, 'r') as f:
-                progress_data = json.load(f)
-            return jsonify(progress_data)
-        else:
-            return jsonify({
-                'progress': 0,
-                'status': 'Not started',
-                'step': 'Initializing...',
-                'completed': False
-            })
-    except Exception as e:
-        return jsonify({
-            'progress': 0,
-            'status': f'Error: {str(e)}',
-            'step': 'Error occurred',
-            'completed': False
-        })
 
 
 # Security headers
@@ -112,6 +57,12 @@ def after_request(response):
         response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
     return response
 
+
+'''
+@app.route('/static/<path:filename>')
+def serve_static(filename):
+    return send_from_directory(app.static_folder, filename)
+'''
 
 @app.route('/')
 def index():
@@ -216,39 +167,15 @@ def ingest_test():
         return jsonify({'success': False, 'message': f'Ingestion error: {str(e)}'})
 
 
-def simulate_progress_during_subprocess(task_type, start_progress, end_progress, duration=8):
-    """Simulate progress increment during subprocess execution"""
-    steps = 4  # 65%, 70%, 75%, 80%
-    step_size = (end_progress - start_progress) / steps
-    sleep_time = duration / steps
-
-    current_progress = start_progress
-    status_messages = [
-        "Analyzing test requirements...",
-        "Generating Python test code...",
-        "Optimizing code structure...",
-        "Finalizing test scripts..."
-    ]
-
-    for i in range(steps):
-        time.sleep(sleep_time)
-        current_progress += step_size
-        update_progress(task_type, int(current_progress), 'Processing', status_messages[i])
-
-
-'''@app.route('/generate', methods=['POST'])
+@app.route('/generate', methods=['POST'])
 def generate_code():
-    """Generate Python test code for all test cases with real progress tracking"""
+    """Generate Python test code for all test cases"""
     global uploaded_files_global
     global generated_scripts_info
 
     try:
         data = request.get_json()
         print(f"Generate request data: {data}")
-
-        # Clear previous progress and initialize
-        clear_progress('generate')
-        update_progress('generate', 0, 'Starting', 'Analyzing test requirements')
 
         # Clear old scripts
         folder_path = app.config['GENERATED_SCRIPTS_FOLDER']
@@ -269,65 +196,25 @@ def generate_code():
         else:
             print(f"[INFO] Folder '{folder_path}' does not exist. Skipping cleanup.")
 
-        # Step 1: Preparation (20%)
-        update_progress('generate', 20, 'Processing', 'Creating Python test structure')
-        time.sleep(1)  # Allow progress to be visible
-
-        # Step 2: Script generation (40%)
-        update_progress('generate', 40, 'Processing', 'Generating Python test code')
-
         # Run Auto_test_gen.py to generate scripts
         print(f"Executing Auto_test_gen.py")
         script_path = os.path.join(os.getcwd(), "..", "Backend", "Auto_test_gen.py")
         print(f"DEBUG: App.py current directory: {os.getcwd()}")
         print(f"DEBUG: Looking for Auto_test_gen.py at: {script_path}")
         print(f"DEBUG: Auto_test_gen.py exists: {os.path.exists(script_path)}")
-
-        # Step 3: Executing script generation (60%)
-        update_progress('generate', 60, 'Processing', 'Optimizing Python code')
-
-        # START OF ENHANCED SUBPROCESS HANDLING
-        print(f"Starting subprocess with progress simulation...")
-
-        # Start progress simulation in a separate thread
-        progress_thread = threading.Thread(
-            target=simulate_progress_during_subprocess,
-            args=('generate', 65, 80, 8)  # Go from 65% to 80% over 8 seconds
-        )
-        progress_thread.start()
-
-        # Run the actual subprocess
+        #output = subprocess.run(["python3", os.path.join(os.getcwd(), "Backend", "Auto_test_gen.py")], capture_output=True, text=True)
         output = subprocess.run(["python3", os.path.join(os.getcwd(), "..", "Backend", "Auto_test_gen.py")],
                                 capture_output=True, text=True)
-
-        # Wait for progress thread to complete
-        progress_thread.join()
-
-        # END OF ENHANCED SUBPROCESS HANDLING
-
         print(f"Auto_test_gen.py completed")
         print(f"DEBUG: Subprocess return code: {output.returncode}")
         print(f"DEBUG: Subprocess stderr: '{output.stderr}'")
         print("STDOUT:", output.stdout)
 
-        # Step 4: Processing results (80% → 90%)
-        update_progress('generate', 80, 'Processing', 'Processing generated scripts')
-        time.sleep(0.8)  # Small delay
-
-        # Continue smooth progress during script processing
-        update_progress('generate', 85, 'Processing', 'Reading script files')
-        time.sleep(0.6)
-
         # Extract all generated script names
         matches = re.findall(r"Script generated\s*:\s*(\S+\.py)", output.stdout)
 
         if not matches:
-            update_progress('generate', 0, 'Error', 'No scripts were generated', True)
             return jsonify({'success': False, 'message': 'No scripts were generated.'})
-
-        # Continue progress during file reading
-        update_progress('generate', 90, 'Processing', 'Organizing test cases')
-        time.sleep(0.7)
 
         # Read all generated scripts
         generated_scripts_info = []
@@ -335,15 +222,7 @@ def generate_code():
         print(f"DEBUG: App looking for scripts in: {script_folder}")
         print(f"DEBUG: Generated scripts folder exists: {os.path.exists(script_folder)}")
 
-        # Update progress while processing each script
-        total_scripts = len(matches)
         for i, script_name in enumerate(matches):
-            # Show incremental progress from 90% to 95%
-            if total_scripts > 1:
-                script_progress = 90 + (i * 5 // total_scripts)
-                update_progress('generate', script_progress, 'Processing', f'Processing script {i + 1}/{total_scripts}')
-                time.sleep(0.3)
-
             file_path = os.path.join(script_folder, script_name)
             if os.path.isfile(file_path):
                 try:
@@ -377,16 +256,6 @@ def generate_code():
                     'code': f"Script {script_name} was listed but not found on disk."
                 })
 
-        # Final progress steps (95% → 100%)
-        update_progress('generate', 95, 'Processing', 'Finalizing test suite')
-        time.sleep(0.8)
-
-        update_progress('generate', 98, 'Processing', 'Preparing response')
-        time.sleep(0.5)
-
-        # Step 5: Complete (100%)
-        update_progress('generate', 100, 'Completed', 'Code generation completed successfully!', True)
-
         return jsonify({
             'success': True,
             'generated_scripts': generated_scripts_info,
@@ -395,204 +264,8 @@ def generate_code():
         })
 
     except Exception as e:
-        update_progress('generate', 0, 'Error', f'Generation failed: {str(e)}', True)
         return jsonify({'success': False, 'message': f'Generation error: {str(e)}'})
-'''
 
-
-@app.route('/generate', methods=['POST'])
-def generate_code():
-    """Generate Python test code for all test cases with real progress tracking"""
-    global uploaded_files_global
-    global generated_scripts_info
-    global generation_lock
-
-    # Use lock to prevent multiple simultaneous generations
-    with generation_lock:
-        try:
-            data = request.get_json()
-            print(f"Generate request data: {data}")
-
-            # Check if generation is already in progress by checking existing progress
-            progress_file = "progress_generate.json"
-            is_already_running = False
-
-            if os.path.exists(progress_file):
-                try:
-                    with open(progress_file, 'r') as f:
-                        existing_progress = json.load(f)
-                    # If progress exists and not completed, don't start new generation
-                    if not existing_progress.get('completed', False) and existing_progress.get('progress', 0) > 0:
-                        is_already_running = True
-                        print(f"[INFO] Generation already in progress at {existing_progress.get('progress', 0)}%")
-                except:
-                    pass
-
-            # Only clear progress if not already running
-            if not is_already_running:
-                clear_progress('generate')
-                update_progress('generate', 0, 'Starting', 'Analyzing test requirements')
-
-                # Clear old scripts (only if starting fresh)
-                folder_path = app.config['GENERATED_SCRIPTS_FOLDER']
-                if os.path.isdir(folder_path):
-                    for filename in os.listdir(folder_path):
-                        file_path = os.path.join(folder_path, filename)
-                        try:
-                            if os.path.isfile(file_path):
-                                os.remove(file_path)
-                                print(f"[INFO] Deleted old script: {file_path}")
-                        except Exception as e:
-                            print(f"[ERROR] Failed to delete {file_path}: {e}")
-                    try:
-                        os.rmdir(folder_path)
-                        print(f"[INFO] Deleted folder: {folder_path}")
-                    except:
-                        pass
-                else:
-                    print(f"[INFO] Folder '{folder_path}' does not exist. Skipping cleanup.")
-
-                # Step 1: Preparation (20%)
-                update_progress('generate', 20, 'Processing', 'Creating Python test structure')
-                time.sleep(1)  # Allow progress to be visible
-
-                # Step 2: Script generation (40%)
-                update_progress('generate', 40, 'Processing', 'Generating Python test code')
-
-                # Run Auto_test_gen.py to generate scripts
-                print(f"Executing Auto_test_gen.py")
-                script_path = os.path.join(os.getcwd(), "..", "Backend", "Auto_test_gen.py")
-                print(f"DEBUG: App.py current directory: {os.getcwd()}")
-                print(f"DEBUG: Looking for Auto_test_gen.py at: {script_path}")
-                print(f"DEBUG: Auto_test_gen.py exists: {os.path.exists(script_path)}")
-
-                # Step 3: Executing script generation (60%)
-                update_progress('generate', 60, 'Processing', 'Optimizing Python code')
-
-                # START OF ENHANCED SUBPROCESS HANDLING
-                print(f"Starting subprocess with progress simulation...")
-
-                # Start progress simulation in a separate thread
-                progress_thread = threading.Thread(
-                    target=simulate_progress_during_subprocess,
-                    args=('generate', 65, 80, 8)  # Go from 65% to 80% over 8 seconds
-                )
-                progress_thread.start()
-
-                # Run the actual subprocess
-                output = subprocess.run(["python3", os.path.join(os.getcwd(), "..", "Backend", "Auto_test_gen.py")],
-                                        capture_output=True, text=True)
-
-                # Wait for progress thread to complete
-                progress_thread.join()
-
-                # END OF ENHANCED SUBPROCESS HANDLING
-
-                print(f"Auto_test_gen.py completed")
-                print(f"DEBUG: Subprocess return code: {output.returncode}")
-                print(f"DEBUG: Subprocess stderr: '{output.stderr}'")
-                print("STDOUT:", output.stdout)
-
-                # Step 4: Processing results (80% → 90%)
-                update_progress('generate', 80, 'Processing', 'Processing generated scripts')
-                time.sleep(0.8)  # Small delay
-
-                # Continue smooth progress during script processing
-                update_progress('generate', 85, 'Processing', 'Reading script files')
-                time.sleep(0.6)
-
-                # Extract all generated script names
-                matches = re.findall(r"Script generated\s*:\s*(\S+\.py)", output.stdout)
-
-                if not matches:
-                    update_progress('generate', 0, 'Error', 'No scripts were generated', True)
-                    return jsonify({'success': False, 'message': 'No scripts were generated.'})
-
-                # Continue progress during file reading
-                update_progress('generate', 90, 'Processing', 'Organizing test cases')
-                time.sleep(0.7)
-
-                # Read all generated scripts
-                generated_scripts_info = []
-                script_folder = app.config['GENERATED_SCRIPTS_FOLDER']
-                print(f"DEBUG: App looking for scripts in: {script_folder}")
-                print(f"DEBUG: Generated scripts folder exists: {os.path.exists(script_folder)}")
-
-                # Update progress while processing each script
-                total_scripts = len(matches)
-                for i, script_name in enumerate(matches):
-                    # Show incremental progress from 90% to 95%
-                    if total_scripts > 1:
-                        script_progress = 90 + (i * 5 // total_scripts)
-                        update_progress('generate', script_progress, 'Processing',
-                                        f'Processing script {i + 1}/{total_scripts}')
-                        time.sleep(0.3)
-
-                    file_path = os.path.join(script_folder, script_name)
-                    if os.path.isfile(file_path):
-                        try:
-                            with open(file_path, 'r', encoding='utf-8') as f:
-                                script_content = f.read()
-
-                            # Extract test case name from script name
-                            test_case_name = script_name.replace('.py', '').replace('_', ' ').title()
-
-                            generated_scripts_info.append({
-                                'id': i + 1,
-                                'script_name': script_name,
-                                'test_case_name': test_case_name,
-                                'file_path': file_path,
-                                'code': f'# Generated Python Test Code - {script_name}\n# Generated on: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}\n\n{script_content}'
-                            })
-                        except Exception as e:
-                            generated_scripts_info.append({
-                                'id': i + 1,
-                                'script_name': script_name,
-                                'test_case_name': script_name.replace('.py', ''),
-                                'file_path': file_path,
-                                'code': f"Error reading file {script_name}: {str(e)}"
-                            })
-                    else:
-                        generated_scripts_info.append({
-                            'id': i + 1,
-                            'script_name': script_name,
-                            'test_case_name': script_name.replace('.py', ''),
-                            'file_path': '',
-                            'code': f"Script {script_name} was listed but not found on disk."
-                        })
-
-                # Final progress steps (95% → 100%)
-                update_progress('generate', 95, 'Processing', 'Finalizing test suite')
-                time.sleep(0.8)
-
-                update_progress('generate', 98, 'Processing', 'Preparing response')
-                time.sleep(0.5)
-
-                # Step 5: Complete (100%)
-                update_progress('generate', 100, 'Completed', 'Code generation completed successfully!', True)
-
-            else:
-                # If already running, return the current state
-                print(f"[INFO] Generation already in progress, returning current state")
-                # Return existing generated scripts if available
-                if generated_scripts_info:
-                    return jsonify({
-                        'success': True,
-                        'generated_scripts': generated_scripts_info,
-                        'total_scripts': len(generated_scripts_info),
-                        'message': f'Generation already completed - {len(generated_scripts_info)} script(s) available'
-                    })
-
-            return jsonify({
-                'success': True,
-                'generated_scripts': generated_scripts_info,
-                'total_scripts': len(generated_scripts_info),
-                'message': f'Successfully generated {len(generated_scripts_info)} Python test script(s)'
-            })
-
-        except Exception as e:
-            update_progress('generate', 0, 'Error', f'Generation failed: {str(e)}', True)
-            return jsonify({'success': False, 'message': f'Generation error: {str(e)}'})
 
 @app.route('/save_code', methods=['POST'])
 def save_code():
@@ -620,6 +293,9 @@ def save_code():
             script_info = generated_scripts_info[0]
             filepath = script_info['file_path']
             filename = script_info['script_name']
+            #timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            #filename = f"autotest_{timestamp}.py"
+            #filepath = os.path.join(script_dir, filename)
 
         # Write the code to file
         with open(filepath, 'w', encoding='utf-8') as f:
@@ -644,19 +320,12 @@ def remove_ansi_codes(text):
 
 @app.route('/execute', methods=['POST'])
 def execute_code():
-    """Execute all generated test scripts on remote RPI via SSH with real progress tracking"""
+    """Execute all generated test scripts on remote RPI via SSH"""
     global generated_scripts_info
 
     try:
         data = request.get_json()
         test_case_id = data.get('test_case_id', None)
-
-        # Clear previous progress and initialize
-        clear_progress('execute')
-        update_progress('execute', 0, 'Starting', 'Preparing Python execution environment')
-
-        # Step 1: Preparation (20%)
-        update_progress('execute', 20, 'Processing', 'Connecting to test infrastructure')
 
         # RPI connection details
         rpi_list = [
@@ -689,11 +358,7 @@ def execute_code():
             time.sleep(RETRY_DELAY)
 
         if not connected:
-            update_progress('execute', 0, 'Error', 'Failed to connect to any Raspberry Pi', True)
             return jsonify({'success': False, 'message': 'Failed to connect to any Raspberry Pi.'})
-
-        # Step 2: Connection established (40%)
-        update_progress('execute', 40, 'Processing', 'Running reviewed Python test cases')
 
         execution_results = []
 
@@ -705,38 +370,21 @@ def execute_code():
                 execution_results.append(result)
             else:
                 ssh.close()
-                update_progress('execute', 0, 'Error', f'Test case {test_case_id} not found', True)
                 return jsonify({'success': False, 'message': f'Test case {test_case_id} not found.'})
         else:
             # Execute all test cases
             script_folder = app.config['GENERATED_SCRIPTS_FOLDER']
             if not os.path.isdir(script_folder):
                 ssh.close()
-                update_progress('execute', 0, 'Error', 'Generated scripts folder does not exist', True)
                 return jsonify({'success': False, 'message': 'Generated scripts folder does not exist.'})
 
-            # Step 3: Executing scripts (60%)
-            update_progress('execute', 60, 'Processing', 'Collecting test results')
-
             # Execute each generated script
-            total_scripts = len(generated_scripts_info)
-            for i, script_info in enumerate(generated_scripts_info):
+            for script_info in generated_scripts_info:
                 if os.path.isfile(script_info['file_path']):
                     result = execute_single_script(ssh, script_info)
                     execution_results.append(result)
 
-                    # Update progress based on script execution
-                    progress = 60 + (i + 1) * 20 // total_scripts
-                    update_progress('execute', progress, 'Processing', f'Executed {i + 1}/{total_scripts} scripts')
-
-        # Step 4: Collecting results (80%)
-        update_progress('execute', 80, 'Processing', 'Generating execution output')
-        time.sleep(1)  # Allow progress to be visible
-
         ssh.close()
-
-        # Step 5: Complete (100%)
-        update_progress('execute', 100, 'Completed', 'Execution completed successfully!', True)
 
         return jsonify({
             'success': True,
@@ -747,7 +395,6 @@ def execute_code():
         })
 
     except Exception as e:
-        update_progress('execute', 0, 'Error', f'Execution failed: {str(e)}', True)
         return jsonify({'success': False, 'message': f'Execution error: {str(e)}'})
 
 
@@ -793,24 +440,14 @@ def execute_single_script(ssh, script_info):
 
 @app.route('/review', methods=['POST'])
 def review_code():
-    """Review Python code quality for individual or all test cases with real progress tracking"""
+    """Review Python code quality for individual or all test cases"""
     try:
         data = request.get_json()
         test_case_id = data.get('test_case_id', None)
 
-        # Clear previous progress and initialize
-        clear_progress('review')
-        update_progress('review', 0, 'Starting', 'Scanning Python code structure')
-
-        # Step 1: Preparation (17%)
-        update_progress('review', 17, 'Processing', 'Analyzing syntax and PEP 8 compliance')
-
         # Ensure reports directory exists
         reports_dir = os.path.join(os.getcwd(), '..', 'reports')
         os.makedirs(reports_dir, exist_ok=True)
-
-        # Step 2: Setup (33%)
-        update_progress('review', 33, 'Processing', 'Checking Python best practices')
 
         # Get the full path to tox
         import shutil
@@ -818,9 +455,6 @@ def review_code():
 
         if not tox_path:
             tox_path = '/Users/gmajum163@cable.comcast.com/Library/Python/3.9/bin/tox'
-
-        # Step 3: Running analysis (50%)
-        update_progress('review', 50, 'Processing', 'Running security analysis')
 
         # Run tox for code quality analysis
         print(f"[INFO] Running tox from: {tox_path}")
@@ -830,18 +464,12 @@ def review_code():
         env = os.environ.copy()
         env['PATH'] = f"/Users/gmajum163@cable.comcast.com/Library/Python/3.9/bin:{env.get('PATH', '')}"
 
-        # Step 4: Executing tox (67%)
-        update_progress('review', 67, 'Processing', 'Generating Python recommendations')
-
         run_tox = subprocess.run([tox_path], capture_output=True, text=True,
                                  cwd=os.getcwd(), env=env, timeout=300)
 
         print(f"[DEBUG] Tox return code: {run_tox.returncode}")
         print(f"[DEBUG] Tox stdout: {run_tox.stdout}")
         print(f"[DEBUG] Tox stderr: {run_tox.stderr}")
-
-        # Step 5: Processing results (83%)
-        update_progress('review', 83, 'Processing', 'Compiling final review report')
 
         # Read the summary file
         summary_path = os.path.join(reports_dir, 'summary.txt')
@@ -854,7 +482,7 @@ def review_code():
         except FileNotFoundError:
             summary_content = f"""CODE REVIEW SUMMARY
 ====================
-Generated at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+Generated at: {datetime.now().strftime('%Y- %m-%d %H:%M:%S')}
 
 ANALYSIS STATUS:
 - Tox return code: {run_tox.returncode}
@@ -923,6 +551,8 @@ Status: Code review completed successfully."""
             script_count = len(generated_scripts_info) if generated_scripts_info else 0
             review_report = f"""=== PYTHON CODE REVIEW REPORT ===
 Review Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+Language: Python
+Total Test Cases Analyzed: {script_count}
 
 === EXECUTIVE SUMMARY ===
 {summary_content}
@@ -952,9 +582,6 @@ This analysis covers all generated test scripts:"""
 
 Status: Code review completed successfully for all {script_count} test case(s)."""
 
-        # Step 6: Complete (100%)
-        update_progress('review', 100, 'Completed', 'Code review completed successfully!', True)
-
         return jsonify({
             'success': True,
             'review_report': review_report,
@@ -962,12 +589,9 @@ Status: Code review completed successfully for all {script_count} test case(s)."
         })
 
     except subprocess.TimeoutExpired:
-        update_progress('review', 0, 'Error', 'Code review timed out after 5 minutes', True)
         return jsonify({'success': False, 'message': 'Code review timed out after 5 minutes'})
     except Exception as e:
-        update_progress('review', 0, 'Error', f'Review failed: {str(e)}', True)
         return jsonify({'success': False, 'message': f'Review error: {str(e)}'})
-
 
 @app.route('/open-report')
 def open_report():

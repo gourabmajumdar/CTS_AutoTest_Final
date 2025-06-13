@@ -81,9 +81,125 @@ def txt_html_converter(content, add_pre_tags=True):
         # For other content, use textile
         return textile.textile(content)
 
+'''
+def parse_summary_for_tool_status(summary_content):
+    """Parse summary.txt to get tool status information"""
+    tool_status = {}
 
-def create_organized_html_report(output_file):
-    """Create HTML report organized by individual test cases"""
+    if not summary_content:
+        return tool_status
+
+    lines = summary_content.split('\n')
+    current_tool = None
+
+    for line in lines:
+        line = line.strip()
+
+        # Check if this line indicates a tool section
+        if line.endswith(':') and line.replace(':', '').upper() in ['BLACK', 'FLAKE8', 'BANDIT', 'PYLINT']:
+            current_tool = line.replace(':', '').lower()
+            tool_status[current_tool] = {}
+
+        # Parse return code and status
+        elif current_tool and 'Return Code:' in line:
+            return_code = int(line.split('Return Code:')[1].strip())
+            tool_status[current_tool]['return_code'] = return_code
+
+        elif current_tool and 'Status:' in line:
+            status = line.split('Status:')[1].strip()
+            tool_status[current_tool]['status'] = status
+            tool_status[current_tool]['has_issues'] = 'Issues Found' in status
+
+    return tool_status
+'''
+
+def parse_summary_for_tool_status(summary_content):
+    """Parse summary.txt to get tool status information - UPDATED for new format"""
+    tool_status = {}
+
+    if not summary_content:
+        return tool_status
+
+    lines = summary_content.split('\n')
+    current_tool = None
+
+    for line in lines:
+        line = line.strip()
+
+        # Check if this line indicates a tool section - UPDATED to handle new format
+        # Look for patterns like "BLACK - CODE FORMATTING: ✅" or "FLAKE8 - STYLE & LINT CHECKS: ⚠️"
+        if any(tool_name in line.upper() for tool_name in ['BLACK', 'FLAKE8', 'BANDIT', 'PYLINT']):
+            if ':' in line and any(icon in line for icon in ['✅', '⚠️', '❌']):
+                # Extract the tool name (first word before the dash or colon)
+                tool_part = line.split('-')[0].strip() if '-' in line else line.split(':')[0].strip()
+                current_tool = tool_part.lower()
+                tool_status[current_tool] = {}
+
+                # Extract status from the icon
+                if '✅' in line:
+                    tool_status[current_tool]['has_issues'] = False
+                    tool_status[current_tool]['status'] = 'Success'
+                elif '⚠️' in line or '❌' in line:
+                    tool_status[current_tool]['has_issues'] = True
+                    tool_status[current_tool]['status'] = 'Issues Found'
+
+        # Parse return code and status (these lines haven't changed)
+        elif current_tool and 'Return Code:' in line:
+            try:
+                return_code = int(line.split('Return Code:')[1].strip())
+                tool_status[current_tool]['return_code'] = return_code
+            except (ValueError, IndexError):
+                tool_status[current_tool]['return_code'] = 'Unknown'
+
+        elif current_tool and 'Status:' in line:
+            status = line.split('Status:')[1].strip()
+            tool_status[current_tool]['status'] = status
+            tool_status[current_tool]['has_issues'] = 'Issues Found' in status
+
+    print("DEBUG - Parsed tool status:", tool_status)  # Debug line - remove this later
+    return tool_status
+
+def extract_script_specific_issues_with_summary(tool_output, script_name, tool_name, summary_status):
+    """Extract issues with summary validation - FIXED VERSION"""
+
+    # First check summary status for this tool
+    tool_info = summary_status.get(tool_name.lower(), {})
+    has_issues_from_summary = tool_info.get('has_issues', False)
+
+    if not has_issues_from_summary:
+        return {"has_issues": False, "content": "No issues found for this script."}
+
+    # If summary says there are issues, extract them from tool output
+    if not tool_output or not script_name:
+        return {"has_issues": True,
+                "content": f"Issues detected (Return Code: {tool_info.get('return_code', 'Unknown')}) but no detailed output available."}
+
+    # Tool-specific extraction logic
+    if tool_name == 'bandit':
+        # For bandit, return the full HTML output since it's already formatted
+        return {"has_issues": True, "content": tool_output}
+
+    # For other tools, extract script-specific lines
+    lines = tool_output.split('\n')
+    script_issues = []
+
+    for line in lines:
+        # Check if line contains the script name
+        if script_name in line or f"generated-scripts/{script_name}" in line:
+            script_issues.append(line)
+        # For pylint, also check for lines that start with the script path
+        elif line.startswith(f"generated-scripts/{script_name}:"):
+            script_issues.append(line)
+
+    if script_issues:
+        return {"has_issues": True, "content": '\n'.join(script_issues)}
+    else:
+        # Summary says there are issues but we can't extract specifics - show full output
+        return {"has_issues": True, "content": tool_output}
+
+
+def create_organized_html_report_with_summary(output_file):
+    """FIXED VERSION - Create HTML report using summary.txt for accurate status detection"""
     delete_combined_report()
 
     # Get all analyzed scripts
@@ -93,16 +209,17 @@ def create_organized_html_report(output_file):
         print("No analyzed scripts found.")
         return
 
-    # Read tool outputs
+    # Read summary content and parse tool status
+    summary_content = read_tool_output('reports/summary.txt')
+    tool_status = parse_summary_for_tool_status(summary_content)
+
+    # Read tool outputs - FIXED: bandit back to .html
     tool_outputs = {
         'flake8': read_tool_output('reports/flake8_output.txt'),
         'pylint': read_tool_output('reports/pylint_output.txt'),
         'black': read_tool_output('reports/black_output.txt'),
-        'bandit': read_tool_output('reports/bandit_output.html')  # bandit outputs HTML
+        'bandit': read_tool_output('reports/bandit_output.html')  # FIXED: Back to .html
     }
-
-    # Read summary
-    summary_content = read_tool_output('reports/summary.txt')
 
     # Start building HTML
     html_content = f"""<!DOCTYPE html>
@@ -126,6 +243,7 @@ def create_organized_html_report(output_file):
         .bandit {{ border-left-color: #f9ca24; }}
         pre {{ background-color: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; font-size: 12px; }}
         .no-issues {{ color: #28a745; font-style: italic; }}
+        .has-issues {{ color: #dc3545; }}
         .table-of-contents {{ background-color: #e9ecef; padding: 15px; border-radius: 5px; margin: 20px 0; }}
         .table-of-contents ul {{ margin: 0; padding-left: 20px; }}
         .navigation {{ position: sticky; top: 10px; background-color: #007acc; color: white; padding: 10px; border-radius: 5px; margin-bottom: 20px; }}
@@ -144,32 +262,28 @@ def create_organized_html_report(output_file):
     <h1>Multi-Test Code Quality Analysis Report</h1>
     <p class="timestamp">Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
     <p><strong>Total Test Cases Analyzed:</strong> {len(analyzed_scripts)}</p>
-"""
 
-    # Add Executive Summary
-    html_content += f"""
     <div id="summary" class="summary">
         <h2>Executive Summary</h2>
         <pre>{summary_content if summary_content else 'Summary not available.'}</pre>
     </div>
-"""
 
-    # Add Table of Contents
-    html_content += """
     <div class="table-of-contents">
         <h2>Table of Contents</h2>
         <ul>
 """
+
     for i, script in enumerate(analyzed_scripts, 1):
         html_content += f'            <li><a href="#test-case-{i}">{script["name"]} ({script["file"]})</a></li>\n'
 
     html_content += """        </ul>
     </div>
+
+<div id="test-cases">
+    <h2>Individual Test Case Analysis</h2>
 """
 
     # Add individual test case analysis
-    html_content += '<div id="test-cases">\n    <h2>Individual Test Case Analysis</h2>\n'
-
     for i, script in enumerate(analyzed_scripts, 1):
         html_content += f"""
     <div id="test-case-{i}" class="test-case">
@@ -190,14 +304,10 @@ def create_organized_html_report(output_file):
         for tool_key, tool_title, tool_desc in tools:
             tool_output = tool_outputs.get(tool_key, '')
 
-            if tool_key == 'bandit':
-                # Bandit outputs HTML, so handle differently
-                script_issues = tool_output if script[
-                                                   'file'] in tool_output else "No security issues found for this script."
-                is_html = True
-            else:
-                script_issues = extract_script_specific_issues(tool_output, script['file'])
-                is_html = False
+            # Use summary-based detection
+            result = extract_script_specific_issues_with_summary(
+                tool_output, script['file'], tool_key, tool_status
+            )
 
             html_content += f"""
         <div class="tool-section {tool_key}">
@@ -205,11 +315,15 @@ def create_organized_html_report(output_file):
             <p><em>{tool_desc}</em></p>
 """
 
-            if script_issues and script_issues.strip() and "No issues found" not in script_issues:
-                if is_html:
-                    html_content += f'            <div>{script_issues}</div>\n'
+            if result["has_issues"]:
+                tool_info = tool_status.get(tool_key.lower(), {})
+                html_content += f'            <div class="has-issues"><strong>Status:</strong> Issues Found (Return Code: {tool_info.get("return_code", "Unknown")})</div>\n'
+
+                # Handle bandit HTML output differently
+                if tool_key == 'bandit':
+                    html_content += f'            <div>{result["content"]}</div>\n'
                 else:
-                    html_content += f'            <pre>{script_issues}</pre>\n'
+                    html_content += f'            <pre>{result["content"]}</pre>\n'
             else:
                 html_content += '            <p class="no-issues">✅ No issues found for this script.</p>\n'
 
@@ -267,7 +381,6 @@ def create_organized_html_report(output_file):
     except Exception as e:
         print(f"Error creating organized report: {e}")
 
-
 def clean_reports_folder():
     reports_folder = "reports/"
     ignored_files = ["combinedreport.html", "summary.txt"]
@@ -296,7 +409,7 @@ if __name__ == "__main__":
     print("Starting organized HTML report generation...")
 
     # Create organized report
-    create_organized_html_report(output_file)
+    create_organized_html_report_with_summary(output_file)
 
     # Clean up temporary files
     clean_reports_folder()
